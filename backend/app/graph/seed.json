@@ -1,0 +1,23 @@
+{
+  "_note": "ILLUSTRATIVE — replace with PPAC monthly import data in Phase 2",
+  "routes": [
+    {"id":"hormuz_west_coast","name":"Persian Gulf via Hormuz","chokepoints":["hormuz"]},
+    {"id":"red_sea_suez","name":"Red Sea / Suez","chokepoints":["bab_el_mandeb","suez"]},
+    {"id":"cape_of_good_hope","name":"Cape of Good Hope","chokepoints":[]},
+    {"id":"west_africa_atlantic","name":"West Africa / Atlantic","chokepoints":[]}
+  ],
+  "suppliers": ["Iraq","Saudi Arabia","UAE","Kuwait","Qatar","Russia","Nigeria","United States"],
+  "ports": ["Sikka","Vadinar","Mundra","Mumbai","New Mangalore","Kochi","Chennai","Visakhapatnam","Paradip"],
+  "refineries": [
+    {"id":"jamnagar","name":"Jamnagar","operator":"Reliance","port_id":"sikka","capacity_mmtpa":68.2,"route_dependency":{"hormuz_west_coast":0.7,"cape_of_good_hope":0.2,"west_africa_atlantic":0.1}},
+    {"id":"vadinar","name":"Vadinar","operator":"Nayara","port_id":"vadinar","capacity_mmtpa":20,"route_dependency":{"hormuz_west_coast":0.8,"west_africa_atlantic":0.2}},
+    {"id":"koyali","name":"Koyali","operator":"IOCL","port_id":"mundra","capacity_mmtpa":13.7,"route_dependency":{"hormuz_west_coast":0.7,"west_africa_atlantic":0.3}},
+    {"id":"mumbai_bpcl","name":"Mumbai","operator":"BPCL","port_id":"mumbai","capacity_mmtpa":12,"route_dependency":{"hormuz_west_coast":0.7,"red_sea_suez":0.3}},
+    {"id":"mumbai_hpcl","name":"Mumbai","operator":"HPCL","port_id":"mumbai","capacity_mmtpa":9.5,"route_dependency":{"hormuz_west_coast":0.7,"red_sea_suez":0.3}},
+    {"id":"kochi","name":"Kochi","operator":"BPCL","port_id":"kochi","capacity_mmtpa":15.5,"route_dependency":{"hormuz_west_coast":0.6,"red_sea_suez":0.4}},
+    {"id":"mangalore","name":"Mangalore","operator":"MRPL","port_id":"new_mangalore","capacity_mmtpa":15,"route_dependency":{"hormuz_west_coast":0.7,"west_africa_atlantic":0.3}},
+    {"id":"chennai","name":"Chennai","operator":"CPCL","port_id":"chennai","capacity_mmtpa":10.5,"route_dependency":{"hormuz_west_coast":0.5,"red_sea_suez":0.5}},
+    {"id":"visakhapatnam","name":"Visakhapatnam","operator":"HPCL","port_id":"visakhapatnam","capacity_mmtpa":8.3,"route_dependency":{"hormuz_west_coast":0.6,"west_africa_atlantic":0.4}},
+    {"id":"paradip","name":"Paradip","operator":"IOCL","port_id":"paradip","capacity_mmtpa":15,"route_dependency":{"hormuz_west_coast":0.6,"red_sea_suez":0.4}}
+  ]
+}

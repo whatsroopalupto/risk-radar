@@ -1,0 +1,1 @@
+"""Geopolitical Risk Radar backend."""

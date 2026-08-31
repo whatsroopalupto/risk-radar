@@ -1,0 +1,5 @@
+{"reference_time":"2025-06-24T18:00:00+00:00","signals":[
+{"signal_id":"a1b2c3d4e5f60001","source_type":"news","source_name":"reuters.com","title":"Iran threatens to close Strait of Hormuz as oil tankers reroute","body":"Iran threatens to close the Strait of Hormuz as oil tankers reroute.","url":"https://reuters.com/a","published_at":"2025-06-21T12:00:00+00:00","fetched_at":"2025-06-21T12:00:00+00:00","raw":{"_fixture":true}},
+{"signal_id":"a1b2c3d4e5f60002","source_type":"news","source_name":"apnews.com","title":"Missile attack strikes oil tanker near Hormuz","body":"A missile attack struck an oil tanker near Hormuz.","url":"https://apnews.com/a","published_at":"2025-06-22T12:00:00+00:00","fetched_at":"2025-06-22T12:00:00+00:00","raw":{"_fixture":true}},
+{"signal_id":"a1b2c3d4e5f60003","source_type":"news","source_name":"bbc.com","title":"Iran closes Strait of Hormuz to oil tanker traffic","body":"Iran closes the Strait of Hormuz to oil tanker traffic.","url":"https://bbc.com/a","published_at":"2025-06-24T16:00:00+00:00","fetched_at":"2025-06-24T16:00:00+00:00","raw":{"_fixture":true}}
+]}
