@@ -46,13 +46,11 @@ If you want both the FastAPI backend and Streamlit dashboard hosted independentl
 
 ---
 
-## Option 3: Optional Local Docker (Developer Container)
+## Option 3: One-click local run (no cloud account needed)
 
-If you prefer to run the application inside a local isolated container:
+No Dockerfile or docker-compose setup exists in this repo — Docker is explicitly out of Phase 1 scope. For a local run without any cloud account, double-click `run.bat` at the project root (or run `python run.py`): it starts the backend and dashboard together and opens the browser automatically.
 
-```bash
-# Build and start container
-docker-compose up --build
-```
 - Dashboard: `http://localhost:8501`
 - Backend API: `http://localhost:8000`
+
+**Note:** Options 1 and 2 above have not been exercised as part of this Phase 1 build — they are provided for when public hosting is actually needed, not verified working deployments.

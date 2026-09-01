@@ -7,4 +7,4 @@
 5. Expand score arithmetic: code, not LLM, assigns risk; Phase 3 evaluates it.
 6. Show routes: noisy-OR prevents duplicate inflation; Phase 2 adds richer graph data.
 7. Show refineries: dependency shares explain exposure; Phase 2 replaces approximations.
-8. Replay fixture: scenario clock preserves recency; Phase 3 adds quantitative backtesting.
+8. Replay a fixture (Hormuz 2025 or Red Sea 2023): scenario clock preserves recency; Phase 3 adds quantitative backtesting.
