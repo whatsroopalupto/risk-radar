@@ -48,6 +48,10 @@ class RiskAssessment(BaseModel):
     component_scores: dict[str, float]
     final_score: Annotated[float, Field(ge=0, le=1)]
     band: RiskBand
+    title: str | None = None
+    source_name: str | None = None
+    published_at: datetime | None = None
+    url: str | None = None
 
 class RouteRisk(TimeAwareModel):
     route_id: str
@@ -89,3 +93,4 @@ class IngestRunStats(TimeAwareModel):
     extracted: int
     extractor_used: str
     errors: list[str] = Field(default_factory=list)
+    scenario_id: str | None = None

@@ -31,6 +31,15 @@ class RefineryRecord(Base):
     refinery_id: Mapped[str] = mapped_column(String(80), index=True)
     payload: Mapped[dict] = mapped_column(JSON)
 
+class RunLogRecord(Base):
+    """Append-only ingestion run history; never wiped, unlike the per-namespace tables above."""
+    __tablename__ = "run_log"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    namespace: Mapped[str] = mapped_column(String(80), index=True)
+    run_id: Mapped[str] = mapped_column(String(40))
+    finished_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    stats: Mapped[dict] = mapped_column(JSON)
+
 engine = create_engine(settings.database_url, connect_args={"check_same_thread": False} if settings.database_url.startswith("sqlite") else {})
 SessionLocal = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False)
 
