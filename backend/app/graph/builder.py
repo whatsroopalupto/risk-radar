@@ -5,7 +5,7 @@ import networkx as nx
 SEED_PATH = Path(__file__).with_name("seed.json")
 def load_seed(path: Path = SEED_PATH) -> dict:
     """Load curated Phase 1 data and reject invalid dependency accounting."""
-    seed=json.loads(path.read_text())
+    seed=json.loads(path.read_text(encoding="utf-8"))
     for refinery in seed["refineries"]:
         total=sum(refinery["route_dependency"].values())
         if abs(total-1.0)>1e-9: raise ValueError(f"route dependencies for {refinery['id']} sum to {total}, not 1.0")

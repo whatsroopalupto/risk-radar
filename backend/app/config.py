@@ -9,7 +9,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=Path(__file__).parents[1] / ".env", extra="ignore")
     gemini_api_key: str = ""
     extractor: str = "auto"
-    gemini_model: str = "gemini-2.5-flash"
+    gemini_model: str = "gemini-3.6-flash"
     database_url: str = "sqlite:///./risk_radar.db"
     api_base_url: str = "http://localhost:8000"
     rss_queries: list[str] = DEFAULT_RSS_QUERIES
