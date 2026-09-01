@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: risk-radar-api
+    env: python
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    cd: backend
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.0
+
+  - type: web
+    name: risk-radar-dashboard
+    env: python
+    buildCommand: pip install -r dashboard/requirements.txt
+    startCommand: streamlit run app.py --server.port $PORT --server.address 0.0.0.0
+    cd: dashboard
+    envVars:
+      - key: API_BASE_URL
+        fromService:
+          type: web
+          name: risk-radar-api
+          property: host
