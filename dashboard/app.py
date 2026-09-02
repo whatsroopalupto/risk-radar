@@ -213,12 +213,8 @@ with tab1:
             with st.spinner("Fetching RSS feeds and reading each headline — this can take a minute or more while the AI classifier is active..."):
                 try:
                     res = api_client.post("/api/ingest/run", {"window_hours": hours})
-                except Exception:
-                    st.error(
-                        "The ingestion run did not finish in time and was cancelled from this page. "
-                        "It may still be completing on the server — wait a moment and refresh, or try "
-                        "a shorter ingestion window."
-                    )
+                except Exception as exc:
+                    st.error(api_client.describe_error(exc))
                 else:
                     st.success(f"Ingestion complete. Extracted {res.get('extracted', 0)} new signals.")
                     st.cache_data.clear()
@@ -242,8 +238,8 @@ with tab1:
                 with st.spinner(f"Replaying {scenario_by_id[selected_id]['label']}..."):
                     try:
                         res = api_client.post(f"/api/replay/{selected_id}")
-                    except Exception:
-                        st.error("The replay did not finish in time and was cancelled from this page. Wait a moment and try again.")
+                    except Exception as exc:
+                        st.error(api_client.describe_error(exc))
                     else:
                         st.success(f"{scenario_by_id[selected_id]['label']} replayed.")
                         st.cache_data.clear()
