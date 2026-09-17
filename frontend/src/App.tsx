@@ -1,5 +1,4 @@
-import { useState } from "react";
-
+import { useEffect, useState } from "react";
 import Header from "./components/Header";
 import StatusStrip from "./components/StatusStrip";
 import KpiRow from "./components/KpiRow";
@@ -16,13 +15,27 @@ function App() {
   const [activeTab, setActiveTab] = useState<TabId>("route-risk");
   const [refreshKey, setRefreshKey] = useState(0);
 
+  const [theme, setTheme] = useState(
+    () => localStorage.getItem("risk-radar-theme") || "light",
+  );
+
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem("risk-radar-theme", theme);
+  }, [theme]);
+
   function handleDataChanged() {
     setRefreshKey((value) => value + 1);
   }
 
   return (
     <main>
-      <Header />
+      <Header
+        theme={theme}
+        onThemeChange={() =>
+          setTheme(theme === "light" ? "dark" : "light")
+        }
+      />
       <StatusStrip refreshKey={refreshKey} />
       <KpiRow refreshKey={refreshKey} />
       <IngestionFunnelBanner refreshKey={refreshKey} />
