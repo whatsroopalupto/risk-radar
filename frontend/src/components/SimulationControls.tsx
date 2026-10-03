@@ -86,8 +86,7 @@ function SimulationControls({
       onDataChanged();
 
       setMessage(
-        `Replay complete: ${selectedScenarioData?.label ?? "Selected scenario"} — ${
-          result.extracted ?? 0
+        `Replay complete: ${selectedScenarioData?.label ?? "Selected scenario"} — ${result.extracted ?? 0
         } signals extracted. Dashboard updated.`,
       );
     } catch (err) {
@@ -192,7 +191,23 @@ function SimulationControls({
         </button>
       </div>
 
-      {message && <p className="simulation-message">{message}</p>}
+      {message && (
+        <div className="simulation-message">
+          <span className="simulation-success-icon" aria-hidden="true">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M20 6 9 17l-5-5" />
+            </svg>
+          </span>
+          <span>{message}</span>
+        </div>
+      )}
 
       {error && <p>Unable to complete action: {error}</p>}
     </section>

@@ -1,7 +1,6 @@
-@import url('https://fonts.googleapis.com/css2?family=Geologica:wght,CRSV@100..900,0&family=Outfit:wght@100..900&display=swap');
-
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
 :root {
-  font-family: "Outfit", sans-serif;
+  font-family: "Inter", sans-serif;
 
   --bg-page: #f7f8fa;
   --bg-card: #ffffff;
@@ -208,10 +207,12 @@ body {
   border-radius: 8px;
   font-size: 12px;
 }
+
 [data-theme="dark"] .ingestion-banner {
   background: #163b2b;
   border-color: #285c45;
 }
+
 [data-theme="dark"] .ingestion-banner {
   color: #d1fae5;
 }
@@ -219,6 +220,7 @@ body {
 [data-theme="dark"] .ingestion-banner strong {
   color: #f3f4f6;
 }
+
 [data-theme="dark"] .funnel-label {
   color: #b7c9c0;
 }
@@ -1262,6 +1264,7 @@ body {
   background: #fff7e6;
   color: #9a6700;
 }
+
 [data-theme="dark"] .history-success {
   background: #163b2b;
   color: #6ee7b7;
@@ -1527,6 +1530,34 @@ body {
   background: #ecfdf3;
   border: 1px solid #bbf7d0;
   border-radius: 5px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.simulation-success-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 22px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #22c55e;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+}
+.simulation-success-icon svg {
+  width: 14px;
+  height: 14px;
+}
+
+[data-theme="dark"] .simulation-message {
+  background: #163b2b;
+  border-color: #285c45;
+  color: #d1fae5;
 }
 
 .severity-high {
@@ -1743,6 +1774,7 @@ body {
 .theme-toggle-track.dark .theme-toggle-moon svg {
   fill: #1f2933;
 }
+
 .header-logo-dark {
   filter: brightness(0) invert(1);
 }
