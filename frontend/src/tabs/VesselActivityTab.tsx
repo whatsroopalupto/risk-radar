@@ -10,9 +10,11 @@ interface Activity {
   score_fusion_enabled: boolean;
   health: { status: string; stale: boolean; detail: string };
   scope: string; limitation: string; computed_at: string;
-  corridors: { id: string; unique_vessels_24h: number; observations_24h: number;
+  corridors: {
+    id: string; unique_vessels_24h: number; observations_24h: number;
     baseline_status: string; baseline_target_days: number; latest_observation: string | null;
-    vessels: Vessel[]; features?: { baseline_hours: number; required_hours: number; coverage_fraction: number; status: string; anomaly: { fraction: number } | null } }[];
+    vessels: Vessel[]; features?: { baseline_hours: number; required_hours: number; coverage_fraction: number; status: string; anomaly: { fraction: number } | null }
+  }[];
 }
 const date = (value: string | null) => value ? new Date(value.endsWith("Z") || /[+-]\d\d:\d\d$/.test(value) ? value : `${value}Z`).toLocaleString("en-IN") : "No observations";
 
@@ -31,20 +33,93 @@ export default function VesselActivityTab({ refreshKey }: { refreshKey: number }
     {error && <p role="alert">{error}</p>}
     {!data && !error && <p>Loading vessel observations...</p>}
     {data && <>
-      <p>Collector: <strong>{data.health.status.replaceAll("_", " ")}</strong> · Position data: <strong>{data.health.stale ? "stale or unavailable" : "recent"}</strong></p>
+      <div className="ais-status-strip">
+        <div className="ais-status-card">
+          <span className="ais-status-label">AIS Collector</span>
+          <strong>{data.health.status.replaceAll("_", " ")}</strong>
+        </div>
+        <div className="ais-status-card">
+          <span className="ais-status-label">Position Data</span>
+          <strong>{data.health.stale ? "Stale or unavailable" : "Recent"}</strong>
+        </div>
+        <div className="ais-status-card">
+          <span className="ais-status-label">Score Fusion</span>
+          <strong>{data.score_fusion_enabled ? "Experimental" : "Disabled"}</strong>
+        </div>
+      </div>
       <p>{data.health.detail}</p>
-      <p>AIS contribution to route scores: {data.score_fusion_enabled ? "experimental fusion enabled; coverage gates still apply" : "disabled pending baseline validation; observations remain available"}.</p>
-      <p>{data.scope}</p>
-      <p>{data.limitation}</p>
+      <div className="ais-fusion-note">
+        <strong>AIS Contribution to Route Scores</strong>
+        <p>
+          {data.score_fusion_enabled
+            ? "Experimental fusion enabled; coverage gates still apply."
+            : "Disabled pending baseline validation; observations remain available."}
+        </p>
+      </div>
+      <div className="ais-info-panel">
+        <div>
+          <span>DATA SCOPE</span>
+          <p>{data.scope}</p>
+        </div>
+        <div>
+          <span>IMPORTANT LIMITATION</span>
+          <p>{data.limitation}</p>
+        </div>
+      </div>
       <p>Live AIS observations are independent of the news replay selected elsewhere. Updated {date(data.computed_at)}.</p>
-      {data.corridors.map((corridor) => <article className="graph-panel" key={corridor.id}>
+      {data.corridors.map((corridor) => <article className="graph-panel vessel-corridor-card" key={corridor.id}>
         <h3>{corridor.id === "hormuz" ? "Hormuz region and UAE approaches (research box)" : "Southern Red Sea / Bab-el-Mandeb"}</h3>
-        <p>{corridor.unique_vessels_24h} observed vessels · {corridor.observations_24h} positions in the last 24 hours</p>
-        <p>Latest observation: {date(corridor.latest_observation)}</p>
-        <p>Baseline: {corridor.baseline_status.replaceAll("_", " ")} · target {corridor.baseline_target_days} days plus coverage validation</p>
-        {corridor.features && <p>{corridor.features.baseline_hours} / {corridor.features.required_hours} qualified baseline hours · latest complete-hour heartbeat coverage {(corridor.features.coverage_fraction * 100).toFixed(0)}% · {corridor.features.anomaly ? `Observed activity drop ${(corridor.features.anomaly.fraction * 100).toFixed(0)}%` : "No qualified anomaly available"}</p>}
+        <div className="ais-corridor-metrics">
+          <div className="ais-metric">
+            <span>Observed Vessels</span>
+            <strong>{corridor.unique_vessels_24h}</strong>
+            <small>Last 24 hours</small>
+          </div>
+          <div className="ais-metric">
+            <span>Position Reports</span>
+            <strong>{corridor.observations_24h}</strong>
+            <small>Last 24 hours</small>
+          </div>
+          <div className="ais-metric">
+            <span>Baseline Hours</span>
+            <strong>{corridor.features?.baseline_hours ?? 0}</strong>
+            <small>Qualified hours</small>
+          </div>
+          <div className="ais-metric">
+            <span>Heartbeat Coverage</span>
+            <strong>{corridor.features ? `${(corridor.features.coverage_fraction * 100).toFixed(0)}%` : "N/A"}</strong>
+            <small>Complete-hour coverage</small>
+          </div>
+        </div>
+        <div className="ais-corridor-meta">
+          <p>
+            <span>Latest Observation</span>
+            <strong>{date(corridor.latest_observation)}</strong>
+          </p>
+          <p>
+            <span>Baseline Status</span>
+            <strong>{corridor.baseline_status.replaceAll("_", " ")}</strong>
+          </p>
+          <p>
+            <span>Baseline Target</span>
+            <strong>{corridor.baseline_target_days} days + coverage validation</strong>
+          </p>
+        </div>
+        {corridor.features && (
+          <div className="ais-baseline-info">
+            <span>BASELINE VALIDATION</span>
+            <p>
+              {corridor.features.baseline_hours} / {corridor.features.required_hours} qualified baseline hours
+            </p>
+            <p>
+              {corridor.features.anomaly
+                ? `Observed activity drop ${(corridor.features.anomaly.fraction * 100).toFixed(0)}%`
+                : "No qualified anomaly available"}
+            </p>
+          </div>
+        )}
         {corridor.vessels.length === 0 ? <p>No observed vessels. This does not establish that the corridor is empty or disrupted.</p> :
-          <div className="vessel-table-scroll"><table><caption>Latest received position per vessel (up to 100 shown)</caption>
+          <div className="vessel-table-scroll ais-table-scroll"><table><caption>Latest received position per vessel (up to 100 shown)</caption>
             <thead><tr><th scope="col">Vessel / MMSI</th><th scope="col">Latitude</th><th scope="col">Longitude</th><th scope="col">Speed (knots)</th><th scope="col">Observed</th></tr></thead>
             <tbody>{corridor.vessels.map((vessel) => <tr key={vessel.mmsi}>
               <td>{vessel.name || "Unnamed vessel"} / {vessel.mmsi} · {vessel.vessel_class ?? "unknown"}</td><td>{vessel.latitude.toFixed(4)}</td><td>{vessel.longitude.toFixed(4)}</td>
