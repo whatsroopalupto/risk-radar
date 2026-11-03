@@ -17,7 +17,7 @@ Updated 3 November 2026. This tracks the synopsis outcomes, not just code presen
 
 ## Still required for full synopsis completion
 
-1. **Live AIS verification:** create an AISStream key locally, run the collector, verify actual provider frames, geographic coverage and persistence across restart. User confirmed no AIS key is available yet.
+1. **Live AIS verification:** key added locally and provider subscription accepted on 3 November 2026. Collector is running with a healthy heartbeat; no position reports arrived during the bounded verification window for the two selected regions. Actual position parsing/persistence and geographic coverage still need live observations; successful authentication is not proof of traffic coverage.
 2. **AIS risk features:** capture coverage/uptime, establish a defensible baseline, validate ship/cargo classification and crossing definitions, implement coverage-aware anomalies and evaluated score fusion. Current activity counts are all observed Class A positions, not tanker passage counts.
 3. **Live-source verification:** verify a successful current RSS/GDELT/Brent run and actual Gemini extraction rather than key configuration alone. Inspect quotas and fallback provenance.
 4. **PPAC/EIA data and graph grounding:** import real dated official data with provenance, distinguish national/country-level statistics from refinery-specific dependencies, replace only assumptions actually supported by evidence. Graph dependencies remain illustrative.
@@ -30,4 +30,4 @@ Scenario simulation and automated procurement rerouting remain Project-II. Netwo
 
 ## Immediate next step
 
-Get the AIS key using the provider's account flow; do not put it in chat or Git. Add `AISSTREAM_API_KEY` only in `backend/.env`. Until then offline AIS integration can be verified, but no claim of live vessel ingestion is justified. Continue the official trade-data and historical corpus work independently.
+Keep the collector running to establish whether the scoped regions supply observations. The configured key stays only in ignored `backend/.env`; do not put it in chat or Git. `python -m backend.scripts.verify_ais` runs a bounded protocol diagnostic without printing keys/raw frames. Until actual positions arrive, no claim of observed live vessel traffic is justified. Continue the official trade-data and historical corpus work independently.
