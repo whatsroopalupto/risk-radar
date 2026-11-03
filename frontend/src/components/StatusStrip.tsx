@@ -101,9 +101,9 @@ function StatusStrip({ refreshKey }: StatusStripProps) {
             tone: "muted",
           },
           {
-            label: "Last updated",
-            value: health.last_run_time
-              ? new Date(health.last_run_time).toLocaleString("en-IN", {
+            label: "Risk calculated",
+            value: health.risk_computed_at
+              ? new Date(health.risk_computed_at).toLocaleString("en-IN", {
                 dateStyle: "short",
                 timeStyle: "short",
               })

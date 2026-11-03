@@ -8,7 +8,7 @@ from datetime import datetime, timedelta, timezone
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from ..config import settings
-from ..db import CollectorState, SessionLocal, VesselObservation, init_db, utcnow
+from ..db import CollectorState, SessionLocal, VesselObservation, VesselProfile, AisCoverageMinute, init_db, utcnow
 from .base import BaseConnector
 
 # Research bounding boxes, not official transit gates.
@@ -83,7 +83,25 @@ def save_position(message: dict, received_at: datetime | None = None) -> bool:
 def set_collector_state(status: str, detail: str = ""):
     with SessionLocal() as db:
         db.merge(CollectorState(name="ais", status=status, updated_at=utcnow(), detail=detail))
+        if status=="connected":
+            db.merge(AisCoverageMinute(minute=utcnow().replace(second=0,microsecond=0)))
         db.commit()
+
+def save_profile(message):
+    if message.get("MessageType")!="ShipStaticData":
+        return False
+    try:
+        report=message["Message"]["ShipStaticData"]
+        mmsi=str(message.get("MetaData",{}).get("MMSI") or report["UserID"])
+        ship_type=int(report["Type"])
+        if len(mmsi)!=9 or not mmsi.isdigit() or not 0<=ship_type<=99:
+            return False
+        with SessionLocal() as db:
+            db.merge(VesselProfile(mmsi=mmsi,ship_type=ship_type,updated_at=utcnow()))
+            db.commit()
+        return True
+    except (KeyError,ValueError,TypeError):
+        return False
 
 
 def collector_health() -> dict:
@@ -101,6 +119,7 @@ def collector_health() -> dict:
 
 def activity_summary(now: datetime | None = None) -> dict:
     now = now or utcnow()
+    health=collector_health()
     corridors = []
     with SessionLocal() as db:
         for name, bounds in CORRIDORS.items():
@@ -117,18 +136,24 @@ def activity_summary(now: datetime | None = None) -> dict:
             recent = db.scalars(select(VesselObservation).join(ranked, VesselObservation.id == ranked.c.id)
                 .where(ranked.c.rank == 1).order_by(VesselObservation.observed_at.desc()).limit(100)).all()
             first = db.scalar(select(func.min(VesselObservation.observed_at)).where(VesselObservation.corridor == name))
+            profiles={p.mmsi:p.ship_type for p in db.scalars(select(VesselProfile).where(VesselProfile.updated_at>=now-timedelta(days=30))).all()}
+            from ..pipeline.vessel_features import corridor_features
+            fresh=bool(recent) and (now-aware(recent[0].observed_at)).total_seconds()<=settings.ais_stale_minutes*60 and not health["heartbeat_stale"]
+            features=corridor_features(name,now,fresh)
             corridors.append({"id":name, "bounds":bounds, "observations_24h":count,
                 "unique_vessels_24h":unique_count,
                 "first_observation":first, "latest_observation":recent[0].observed_at if recent else None,
-                "baseline_status":"collecting" if first else "no_observations",
+                "baseline_status":features["status"] if first else "no_observations",
                 "baseline_target_days":settings.ais_baseline_days,
-                "anomaly":None,
+                "anomaly":features["anomaly"],"features":features,
                 "vessels":[{"mmsi":r.mmsi,"name":r.ship_name,"latitude":r.latitude,
-                    "longitude":r.longitude,"speed_knots":r.speed_knots,"observed_at":r.observed_at}
+                    "longitude":r.longitude,"speed_knots":r.speed_knots,"observed_at":r.observed_at,
+                    "vessel_class":"tanker" if 80<=profiles.get(r.mmsi,-1)<=89 else "unknown" if r.mmsi not in profiles else "other",
+                    "ship_type":profiles.get(r.mmsi)}
                     for r in recent]})
-    return {"health":collector_health(), "computed_at":now, "corridors":corridors,
-            "scope":"Observed Class A vessel positions; cargo type and completed transits are not established.",
-            "limitation":"Coverage-aware anomaly detection and score fusion are pending; missing AIS is not evidence of disruption."}
+    return {"health":health, "computed_at":now, "corridors":corridors,
+            "scope":"Observed Class A vessel positions; tanker classification uses received static ship type when available, not verified crude cargo or completed transits.",
+            "limitation":"Anomalies require a coverage-qualified baseline and current observations. Missing AIS is not evidence of disruption; zero-observation windows are excluded from anomaly scoring."}
 
 
 async def collect_forever():
@@ -147,7 +172,7 @@ async def collect_forever():
                 async with connect(STREAM_URL, compression="deflate", open_timeout=20,
                                    ping_interval=20, ping_timeout=20, max_size=2**20) as socket:
                     await socket.send(json.dumps({"APIKey":settings.aisstream_api_key,
-                        "BoundingBoxes":list(CORRIDORS.values()), "FilterMessageTypes":["PositionReport"]}))
+                        "BoundingBoxes":list(CORRIDORS.values()), "FilterMessageTypes":["PositionReport","ShipStaticData"]}))
                     set_collector_state("subscribing")
                     confirmed = False
                     last_heartbeat = utcnow()
@@ -173,6 +198,7 @@ async def collect_forever():
                             set_collector_state("connected")
                             delay = 1
                         await asyncio.to_thread(save_position, message)
+                        await asyncio.to_thread(save_profile, message)
                         if (utcnow() - last_heartbeat).total_seconds() >= 30:
                             set_collector_state("connected")
                             last_heartbeat = utcnow()

@@ -44,7 +44,7 @@ function IngestionFunnelBanner({
     <section className="ingestion-banner">
       <span className="live-badge">
         {latestRun?.scenario_id
-          ? `REPLAY: ${formatScenarioName(latestRun.scenario_id)}`
+          ? `ILLUSTRATIVE REPLAY: ${formatScenarioName(latestRun.scenario_id)}`
           : unverified ? "UNVERIFIED SAVED DATA" : "LIVE RUN"}
       </span>
 
@@ -55,6 +55,7 @@ function IngestionFunnelBanner({
           "Loading..."
         ) : latestRun ? (
           <>
+            {latestRun.data_quality && latestRun.data_quality !== "ok" && <strong>News sources unavailable; previous risk retained. </strong>}
             <strong>
               {Object.entries(latestRun.per_source).reduce(
                 (total, [name, source]) => total + (name === "prices" ? 0 : source.fetched),
@@ -71,6 +72,7 @@ function IngestionFunnelBanner({
             after dedupe →{" "}
             <strong>{latestRun.extracted}</strong>{" "}
             extracted &amp; scored
+            {latestRun.deferred ? ` · ${latestRun.deferred} retained for retrieval, unscored due to batch limit` : ""}
           </>
         ) : (
           "Saved assessments have no matching run metadata; freshness is unverified."

@@ -1,33 +1,38 @@
-# Project-I completion status
+# Project-I status against the synopsis
 
-Updated 3 November 2026. This tracks the synopsis outcomes, not just code presence. Roopal owns AIS and integration; contributions from other team members can be incorporated, but they are not assumed.
+Updated 3 November 2026. Implementation and field validation are separate: code presence is not proof of detection accuracy or data coverage.
 
-## Implemented in this increment
+| Synopsis outcome | Implementation and verification | Remaining real-world evidence |
+| --- | --- | --- |
+| Automated news/AIS pipeline | RSS time windows/deduplication, optional GDELT, scheduler, AISStream subscription, real persisted positions/profiles/coverage and freshness API | GDELT availability; sustained regional AIS coverage |
+| LLM extraction and credible risk classification | Real Gemini extraction verified; schema handling, retry/circuit fallback, provenance, deterministic scores and bands | Wider independent extraction/scoring evaluation and calibration |
+| Supplier-route-port-refinery graph | NetworkX propagation, possible supplier paths, explainable refinery contributions, equivalent graph table | Procurement-specific dependency data remains unavailable; shares are explicitly illustrative |
+| Official oil trade data | Real PPAC monthly PDF and EIA national brief ingested, with units, periods, source URLs, hashes and previous-snapshot fallback | These public aggregates cannot establish refinery-level dependencies |
+| Live dashboard and alerting | React charts, history, source freshness, retained snapshots, separate replay datasets, evidence-linked threshold alerts | Sustained operational monitoring; hosting is not required for the local prototype |
+| Historical evidence/RAG | Persistent article corpus, BM25 retrieval, citation-constrained Gemini generation and honest retrieval fallback | Broader retrieval/answer faithfulness evaluation |
+| Historical accuracy validation | Reproducible heuristic/Gemini runner; checked-in source-reviewed pilot, measured confusion counts and written error analysis | Independent original-article corpus, untouched event-level test set, calibrated thresholds, combined AIS validation and lead time |
+| Final documentation/demo | Current README, architecture, limitations, validation protocol/report and professor walkthrough | Incorporate real field-validation results before calling the full project finished |
 
-- React launcher, Vite API proxy, explicit development CORS, graph ref fix/keyboard access and equivalent connection table.
-- Correct 0-100 signal scale, exact high-route count, extractor-prefix counting, current-namespace counts and honest legacy-data provenance.
-- Automatic dashboard polling, refreshable tabs, live/replay display switching and error notices.
-- Separate replay namespaces, append-only risk/evidence/market snapshots and daily live monitoring history.
-- Optional serial news/price scheduler and cross-process ingestion locks; background polling preserves a selected replay.
-- AISStream backend collector, compressed subscription, bounded research regions, validated timestamped positions, deduplication, reconnect/backoff and health reporting.
-- AIS activity API and React tab with explicit no-key, stale-data and baseline-collection states. No fabricated vessel or anomaly results.
-- Persisted route threshold alerts with evidence and separate replay labelling.
-- Offline heuristic news-only backtesting runner and a validation protocol that requires independent labels and guards against simple future/event/article leakage.
-- Verification covers offline AIS frames/timestamp variants, namespace isolation, retained history, alert deduplication, ingestion locks and evaluation leakage. Production React build and ESLint pass. Compatible dependency updates removed all high-severity npm audit findings; 12 moderate findings remain in development lint dependencies. No forced major dependency changes were applied.
+## Live verification
 
-## Still required for full synopsis completion
+Local verification: 77 offline backend tests pass; React production build and ESLint pass. GitHub Actions checks are configured for Windows and Ubuntu. Local test success is not a claim that remote CI has already completed.
 
-1. **Live AIS verification:** key added locally and provider subscription accepted on 3 November 2026. Collector is running with a healthy heartbeat; no position reports arrived during the bounded verification window for the two selected regions. Actual position parsing/persistence and geographic coverage still need live observations; successful authentication is not proof of traffic coverage.
-2. **AIS risk features:** capture coverage/uptime, establish a defensible baseline, validate ship/cargo classification and crossing definitions, implement coverage-aware anomalies and evaluated score fusion. Current activity counts are all observed Class A positions, not tanker passage counts.
-3. **Live-source verification:** verify a successful current RSS/GDELT/Brent run and actual Gemini extraction rather than key configuration alone. Inspect quotas and fallback provenance.
-4. **PPAC/EIA data and graph grounding:** import real dated official data with provenance, distinguish national/country-level statistics from refinery-specific dependencies, replace only assumptions actually supported by evidence. Graph dependencies remain illustrative.
-5. **RAG:** persistent article retrieval and cited contextual answers/evidence linking. This increment retains evidence but does not claim to implement RAG.
-6. **Measured validation:** independently label real historical and quiet/control periods, freeze event-level splits, evaluate heuristic/Gemini/AIS components and the combined system, report precision/recall/F1 and lead time where supported. The runner alone is not a validation report.
-7. **Operational QA:** exercise the scheduler and live collector over time, retention policy, outage recovery, data freshness and broader UI responsiveness; dependency audit and final deployment decision.
-8. **Final report/demo:** update remaining historical ADR/demo documents to current architecture and prepare the professor walkthrough from verified results.
+`output/verification/live_sources.json` records successful RSS, Brent and one valid Gemini extraction; GDELT was unavailable. `output/verification/live_cycle.json` records a complete live pipeline run: 48 RSS articles, 29 extracted assessments, all using Gemini in that run. Official trade adapters succeeded against both sources. Real AIS positions subsequently arrived and persisted in the Hormuz research box; `output/verification/ais_live.json` records counts and coverage. Red Sea observations remain unavailable. The first 40-second diagnostic had no positions; later reception is separately verified, not backdated.
 
-Scenario simulation and automated procurement rerouting remain Project-II. NetworkX satisfies the synopsis; a Neo4j migration is not required.
+The live RAG verification returned a provider HTTP 503 and correctly displayed retained evidence with valid citation links. Structured generation and citation rejection are covered by offline tests; successful live synthesis is not claimed from that failed request. See `output/verification/rag.json`.
 
-## Immediate next step
+## Implemented AIS rule
 
-Keep the collector running to establish whether the scoped regions supply observations. The configured key stays only in ignored `backend/.env`; do not put it in chat or Git. `python -m backend.scripts.verify_ais` runs a bounded protocol diagnostic without printing keys/raw frames. Until actual positions arrive, no claim of observed live vessel traffic is justified. Continue the official trade-data and historical corpus work independently.
+The default baseline needs 720 prior hours with at least 80% heartbeat-minute coverage and positive observed reception, followed by a fresh, sufficiently covered current hour. Zero-current-observation windows abstain. A large observed activity reduction can corroborate existing news risk by at most 10% of remaining score headroom. It does not create a risk event without news or establish a physical closure. This rule still needs real-data validation.
+
+## Measured pilot
+
+The source-reviewed pilot has three route-windows, two event families, two positives and one control. Both heuristic-only and Gemini-only runs miss the two positives at the existing 30-point threshold. Precision is undefined because there are no positive predictions; recall and F1 are zero. These results are shown honestly in the UI. Labels are provisional, source text is paraphrased and availability is reconstructed from publication dates; this is not a final held-out benchmark. See `VALIDATION_REPORT.md`.
+
+## Work that requires additional data/time
+
+1. Keep the collector running and establish whether the selected regions provide useful coverage. A real 30-day qualified baseline cannot be completed in this coding session.
+2. Assemble and independently review a larger original-news historical corpus and quiet/control periods, then calibrate on development events and evaluate untouched events. The tiny pilot does not establish reliable performance.
+3. Obtain refinery-specific procurement/dependency evidence if the final report intends to claim actual refinery exposure rather than modelled exposure.
+
+No numerical accuracy, vessel traffic, procurement share or baseline history has been invented to close these gaps. Scenario simulation and automated procurement rerouting remain Project-II. Roopal owns AIS and integration; teammates can contribute labels/source review without blocking further coding.

@@ -15,9 +15,14 @@ def main():
     if args.interval_seconds < 60:
         parser.error("interval must be at least 60 seconds")
     init_db()
+    last_trade_refresh=-86400.0
     with exclusive_job("scheduler"):
         while True:
             try:
+                if time.monotonic()-last_trade_refresh>=86400:
+                    from .connectors.trade import refresh_trade
+                    refresh_trade()
+                    last_trade_refresh=time.monotonic()
                 # Monitoring must not switch the dashboard away from a replay.
                 result = run_cycle(args.window_hours, update_display=False)
                 print(f"Completed run {result.run_id}: {result.extracted} assessments", flush=True)

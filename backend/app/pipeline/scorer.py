@@ -51,7 +51,8 @@ def score_extraction(
         LOGGER.warning("Unknown event_type '%s', falling back to 'other' weight 0.15", extraction.event_type)
         type_weight = TYPE_WEIGHTS["other"]
     speculative = 0.6 if extraction.is_speculative else 1.0
-    final = type_weight * extraction.severity * extraction.confidence * credibility * recency * speculative
+    relevance = 1.0 if extraction.is_relevant else 0.0
+    final = type_weight * extraction.severity * extraction.confidence * credibility * recency * speculative * relevance
     components = {
         "type_weight": type_weight,
         "severity": extraction.severity,
@@ -59,6 +60,7 @@ def score_extraction(
         "credibility_weight": credibility,
         "recency_weight": recency,
         "speculative_weight": speculative,
+        "relevance_weight": relevance,
     }
     return RiskAssessment(
         signal_id=signal_id,

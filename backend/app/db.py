@@ -83,6 +83,31 @@ class AlertRecord(Base):
     occurred_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
     payload: Mapped[dict] = mapped_column(JSON)
 
+class ArticleRecord(Base):
+    """Retained news corpus for namespace-scoped evidence retrieval."""
+    __tablename__ = "article_corpus"
+    namespace: Mapped[str] = mapped_column(String(80), primary_key=True)
+    signal_id: Mapped[str] = mapped_column(String(80), primary_key=True)
+    published_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    payload: Mapped[dict] = mapped_column(JSON)
+
+class AisCoverageMinute(Base):
+    __tablename__ = "ais_coverage_minutes"
+    minute: Mapped[datetime] = mapped_column(DateTime(timezone=True), primary_key=True)
+
+class VesselProfile(Base):
+    __tablename__ = "vessel_profiles"
+    mmsi: Mapped[str] = mapped_column(String(9), primary_key=True)
+    ship_type: Mapped[int] = mapped_column(Integer)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+class TradeSnapshot(Base):
+    __tablename__ = "trade_snapshots"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    provider: Mapped[str] = mapped_column(String(20), index=True)
+    retrieved_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    payload: Mapped[dict] = mapped_column(JSON)
+
 def display_namespace(db) -> str:
     state = db.get(DisplayState, 1)
     return state.namespace if state else "live"
@@ -93,6 +118,15 @@ SessionLocal = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False
 def init_db() -> None:
     """Create Phase 1 tables without migration machinery."""
     Base.metadata.create_all(engine)
+    # Existing developer data remains available to retrieval without relabelling
+    # it as a newly fetched article or an independently verified historical label.
+    with SessionLocal() as db:
+        from sqlalchemy import select
+        for record in db.scalars(select(AssessmentRecord)).all():
+            if db.get(ArticleRecord, (record.namespace,record.signal_id)) is None:
+                db.add(ArticleRecord(namespace=record.namespace, signal_id=record.signal_id,
+                    published_at=record.published_at, payload={"signal":record.signal,"extraction":record.assessment.get("extraction",{})}))
+        db.commit()
 
 def utcnow() -> datetime:
     """Provide a single timezone-safe current time for orchestration."""

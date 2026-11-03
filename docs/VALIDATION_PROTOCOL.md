@@ -1,6 +1,6 @@
 # Historical validation protocol
 
-Status: evaluation runner implemented; independently labelled corpus and measured system report pending. Existing replay fixtures are demonstration scenarios, not verified ground truth. Do not label their outputs as historical accuracy.
+Status: evaluation runner and a measured three-window provisional pilot report are implemented. Independently reviewed original-news corpus and final full-system evaluation remain pending. Existing replay fixtures are explicitly illustrative scenarios, not verified ground truth. Do not label their outputs as historical accuracy. See `VALIDATION_REPORT.md` for the pilot's missed detections and limitations.
 
 ## Unit and target
 

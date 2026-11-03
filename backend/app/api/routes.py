@@ -2,6 +2,7 @@
 import json
 from datetime import datetime
 from pathlib import Path
+from pydantic import BaseModel, Field
 from fastapi import APIRouter, HTTPException, Query
 from sqlalchemy import func, select
 from ..db import AssessmentRecord, RefineryRecord, RouteRecord, RunLogRecord, SessionLocal, RiskSnapshot, AlertRecord, DisplayState, display_namespace
@@ -21,6 +22,8 @@ def health() -> dict:
         count=db.scalar(select(func.count()).select_from(AssessmentRecord).where(AssessmentRecord.namespace==namespace)) or 0
         last_run=db.scalars(select(RunLogRecord).where(RunLogRecord.namespace==namespace).order_by(RunLogRecord.finished_at.desc())).first()
         records=db.scalars(select(AssessmentRecord).where(AssessmentRecord.namespace==namespace)).all()
+        saved_route=db.scalars(select(RouteRecord).where(RouteRecord.namespace==namespace)).first()
+        risk_computed_at=saved_route.payload.get("computed_at") if saved_route else None
     if last_run:
         sources={name:{"status":item.get("status"),"fetched":item.get("fetched",0),"error":item.get("error")} for name,item in last_run.stats.get("per_source",{}).items()}
         for name in ("rss","gdelt","prices"): sources.setdefault(name,{"status":"not_polled_last_run","fetched":0,"error":None})
@@ -33,7 +36,7 @@ def health() -> dict:
     for record in records:
         used=(record.assessment or {}).get("extraction",{}).get("extractor","unknown")
         extractor_mix[used]=extractor_mix.get(used,0)+1
-    return {"sources":sources,"extractor":extractor_status(),"extractor_mix":extractor_mix,"db_counts":{"assessments":count},"version":"0.2.0","last_run_time":last_run_time,"dataset":namespace,"provenance":"recorded_run" if last_run else "legacy_snapshot_unverified", "latest_run": last_run.stats if last_run else None}
+    return {"sources":sources,"extractor":extractor_status(),"extractor_mix":extractor_mix,"db_counts":{"assessments":count},"version":"0.3.0","last_run_time":last_run_time,"risk_computed_at":risk_computed_at,"dataset":namespace,"provenance":"recorded_run" if last_run else "legacy_snapshot_unverified", "latest_run": last_run.stats if last_run else None}
 @router.post("/ingest/run",response_model=IngestRunStats)
 def ingest(window_hours:int=Query(24,ge=1,le=168))->IngestRunStats: return run_cycle(window_hours)
 @router.get("/ingest/history",response_model=list[IngestRunStats])
@@ -49,8 +52,9 @@ def signals(limit:int=Query(100,ge=1,le=2000),band:str|None=None,route_id:str|No
     values=[]
     for record in records:
         data=dict(record.assessment)
-        data["title"]=record.title; data["source_name"]=record.source_name; data["published_at"]=record.published_at
-        if record.signal and isinstance(record.signal,dict): data["url"]=record.signal.get("url")
+        synthetic=bool((record.signal or {}).get("raw",{}).get("_fixture"))
+        data["title"]=record.title; data["source_name"]=f"Synthetic fixture ({record.source_name} weight)" if synthetic else record.source_name; data["published_at"]=record.published_at
+        if record.signal and isinstance(record.signal,dict): data["url"]=None if synthetic else record.signal.get("url")
         values.append(RiskAssessment.model_validate(data))
     if band: values=[value for value in values if value.band==band]
     if route_id: values=[value for value in values if route and value.signal_id in route.payload.get("contributing_signal_ids",[])]
@@ -84,7 +88,7 @@ def refineries()->list[RefineryExposure]:
     with SessionLocal() as db: return [RefineryExposure.model_validate(item.payload) for item in db.scalars(select(RefineryRecord).where(RefineryRecord.namespace==display_namespace(db))).all()]
 @router.get("/graph",response_model=dict)
 def graph()->dict:
-    graph=build_graph(); return {"nodes":[{"id":node,**attrs} for node,attrs in graph.nodes(data=True)],"edges":[{"source":a,"target":b} for a,b in graph.edges()]}
+    graph=build_graph(); return {"nodes":[{"id":node,**attrs} for node,attrs in graph.nodes(data=True)],"edges":[{"source":a,"target":b,**attrs} for a,b,attrs in graph.edges(data=True)],"provenance":{"supplier_routes":"Possible geographic paths, not observed shipments","refinery_dependencies":"Illustrative assumptions; national PPAC/EIA totals cannot establish these shares"}}
 @router.get("/scenarios",response_model=list[dict])
 def scenarios()->list[dict]:
     """Discover every saved fixture, not just one hardcoded scenario, so adding a fixture file is enough to expose it."""
@@ -99,7 +103,7 @@ def replay(scenario_id:str)->IngestRunStats:
     if scenario_id not in {item["id"] for item in scenarios()}: raise HTTPException(404,"Scenario not found")
     fixture_path=FIXTURES_DIR/f"{scenario_id}.json"
     if not fixture_path.exists(): raise HTTPException(404,"Scenario not found")
-    payload=json.loads(fixture_path.read_text(encoding="utf-8")); signals=[Signal.model_validate(value) for value in payload["signals"]]
+    payload=json.loads(fixture_path.read_text(encoding="utf-8")); signals=[Signal.model_validate(value).model_copy(update={"url":None}) for value in payload["signals"]]
     ref_time_str = payload.get("reference_time")
     ref_time = datetime.fromisoformat(ref_time_str) if ref_time_str else Signal.model_validate(payload["signals"][-1]).published_at
     return run_cycle(fixture_signals=signals,reference_time=ref_time,namespace=f"replay:{scenario_id}",sources=[],scenario_id=scenario_id)
@@ -127,4 +131,42 @@ def show_live():
         db.merge(DisplayState(id=1,namespace="live"))
         db.commit()
     return {"dataset":"live"}
+
+class EvidenceQuestion(BaseModel):
+    question: str = Field(min_length=3,max_length=500)
+    route_id: str | None = None
+    generate: bool = True
+
+@router.post("/evidence/ask")
+def evidence_ask(request: EvidenceQuestion):
+    from ..evidence import answer_question
+    with SessionLocal() as db:
+        namespace=display_namespace(db)
+    try:
+        return answer_question(request.question,namespace,request.route_id,request.generate)
+    except ValueError as exc:
+        raise HTTPException(422,str(exc)) from exc
+
+@router.get("/trade")
+def trade_data():
+    from ..connectors.trade import trade_summary
+    return trade_summary()
+
+@router.post("/trade/refresh")
+def trade_refresh():
+    from ..connectors.trade import refresh_trade
+    from ..pipeline.locking import exclusive_job
+    with exclusive_job("trade"):
+        return refresh_trade()
+
+@router.get("/validation")
+def validation_reports():
+    directory=Path(__file__).resolve().parents[3]/"output"/"evaluation"
+    reports=[]
+    for filename in ("pilot_heuristic.json","pilot_gemini.json"):
+        path=directory/filename
+        if path.exists():
+            reports.append(json.loads(path.read_text(encoding="utf-8")))
+    return {"status":"provisional_pilot" if reports else "not_evaluated","reports":reports,
+        "notice":"Small, provisionally source-reviewed paraphrase corpus. These are not final held-out accuracy or real-time lead-time results."}
 

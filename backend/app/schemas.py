@@ -36,6 +36,7 @@ class RiskExtraction(BaseModel):
     confidence: Annotated[float, Field(ge=0, le=1)]
     evidence: Annotated[str, Field(max_length=200)]
     extractor: str
+    evidence_truncated: bool = False
 
 class RiskAssessment(BaseModel):
     signal_id: str
@@ -63,6 +64,8 @@ class RouteRisk(TimeAwareModel):
     band: RiskBand
     contributing_signal_ids: list[str]
     computed_at: datetime
+    ais_evidence: dict[str, Any] | None = None
+    score_before_ais: float | None = None
 
 class RouteContribution(BaseModel):
     route_id: str
@@ -94,3 +97,5 @@ class IngestRunStats(TimeAwareModel):
     extractor_used: str
     errors: list[str] = Field(default_factory=list)
     scenario_id: str | None = None
+    deferred: int = 0
+    data_quality: str = "ok"

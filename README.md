@@ -2,7 +2,7 @@
 
 An academic early-warning prototype for India's crude-oil import supply chain. News is converted into structured facts, scored deterministically and mapped to route/refinery exposure. FastAPI serves a React/TypeScript dashboard; SQLite retains run history, evidence snapshots, alerts and vessel observations.
 
-**Project-I is in progress.** See [verified implementation and remaining synopsis requirements](docs/PROJECT_I_STATUS.md). The original six-week implementation and subsequent React migration are the foundation. AIS collection is implemented but requires live verification; AIS anomaly scoring, sourced PPAC/EIA dependencies, RAG and measured full-system validation are not complete. Historical replay fixtures are demonstrations, not ground-truth accuracy datasets. Scenario simulation and automated procurement rerouting are Project-II.
+**The core Project-I prototype is implemented; field validation remains incomplete.** See [verification and remaining evidence requirements](docs/PROJECT_I_STATUS.md). The system includes news/AIS collection, coverage-gated activity corroboration, official PPAC/EIA national context, cited RAG, alerts, retained history and measured historical pilot reports. Actual AIS traffic coverage, a qualified baseline and broader independently reviewed accuracy validation are still required. Refinery procurement dependencies remain explicit model assumptions. Historical replay fixtures are demonstrations, not ground-truth accuracy datasets. Scenario simulation and automated procurement rerouting are Project-II.
 
 ## Windows setup
 
@@ -48,13 +48,13 @@ Get a key from [AISStream](https://aisstream.io/). Put it in `backend/.env` as `
 .\.venv\Scripts\python.exe -m backend.app.connectors.ais
 ```
 
-Run one collector per database. It subscribes server-side to Class A position reports in research boxes covering Hormuz and the southern Red Sea/Bab-el-Mandeb, validates positions and timestamps, deduplicates observations, persists them and reconnects with backoff. It uses the [provider's documented subscription protocol](https://aisstream.io/documentation). Keys never reach React.
+Run one collector per database. It subscribes server-side to Class A position and static ship-type reports in research boxes covering Hormuz and the southern Red Sea/Bab-el-Mandeb, validates positions and timestamps, deduplicates observations, persists them and reconnects with backoff. It uses the [provider's documented subscription protocol](https://aisstream.io/documentation). Keys never reach React.
 
-The **AIS Vessel Activity** tab shows observed vessels, position counts, last observations and connection/freshness state. These are not confirmed oil tankers or completed transits. Zero observations can mean missing coverage. Coverage-aware baseline/anomaly detection and scoring fusion remain pending; no vessel data is fabricated when a key is missing. AIS is always live-source data, independent of the selected news replay.
+The **AIS Vessel Activity** tab shows observed vessels, reported type when available, position counts, last observations, connection/freshness state and qualified baseline hours. These are not verified crude cargoes or completed transits. Zero observations can mean missing coverage. The activity-drop rule requires a fresh, covered current hour and the configured baseline (30 days by default). It abstains on zero observations and can only corroborate existing news risk, by at most 10% of remaining score headroom. It is implemented and unit-tested, not yet validated on real labelled AIS disruptions. No vessel data or baseline is fabricated. AIS is always live-source data, independent of the selected news replay.
 
 ## Scheduled news monitoring
 
-The scheduler is optional and separate from the dashboard:
+The scheduler is optional and separate from the dashboard. It also checks official trade reports daily:
 
 ```powershell
 .\.venv\Scripts\python.exe -m backend.app.monitor --interval-seconds 900 --window-hours 24
@@ -73,6 +73,16 @@ Use `--once` for a single cycle. Ingestion is serial; concurrent manual/replay i
 - Live trends use retained daily news-risk snapshots. Replay/legacy trends reconstruct cumulative evidence; they are not measured historical daily predictions.
 - Legacy stored assessments without matching run metadata are labelled unverified rather than fresh live results. New tables are created on startup; existing data is not relabelled or deleted.
 - In-app alerts record evidence-backed crossings of 30/65 or an initial elevated observation. Repeated unchanged elevated runs do not create duplicate alerts. No email/SMS is sent.
+- A total RSS/GDELT outage retains the previous risk instead of replacing it with zero. The risk-calculation timestamp stays separate from the failed poll time.
+- Live extraction is capped by `MAX_ARTICLES_PER_RUN` (80 by default). Remaining relevant articles are retained for retrieval and explicitly counted as deferred/unscored.
+
+## Official trade context and RAG
+
+**Official Trade Context** ingests the public PPAC monthly PDF and EIA India country brief, preserving original units, periods, source links, PDF page references and source hashes. They are publication adapters, not claimed account-bound API integrations. A failed refresh retains the last successful snapshot with a warning. National totals and supplier shares do not establish refinery-level procurement dependencies.
+
+**Evidence & Context** retrieves matching retained articles from the selected namespace with lexical BM25. Optional Gemini generation must attach known retrieved source IDs to every paragraph; malformed citations or unavailable generation fall back to retrieved evidence. This is RAG without an external vector database. Source-ID checks do not guarantee every generated statement is faithful; inspect original sources and dates. Answers never alter scores or recommend procurement rerouting.
+
+**Historical Validation** shows the measured pilot reports, case errors and limitations. Both fixed-threshold news-only runs miss the two positive windows in the small provisional corpus; no accuracy claim is hidden or inflated. See [validation report](docs/VALIDATION_REPORT.md).
 
 ## Demo flow
 
@@ -100,6 +110,9 @@ Interactive endpoint documentation: `http://127.0.0.1:8000/docs`.
 | `POST /api/display/live` | Select saved live data |
 | `GET /api/ais/activity` | Observed vessel activity and collector health |
 | `GET /api/alerts` | Evidence-linked alerts for selected dataset |
+| `GET /api/trade`, `POST /api/trade/refresh` | Retained official national statistics / refresh |
+| `POST /api/evidence/ask` | Namespace-scoped retrieval and optional cited generation |
+| `GET /api/validation` | Measured provisional pilot reports |
 
 ## Verification and historical evaluation
 
@@ -113,6 +126,15 @@ npm run lint
 
 Backend tests use a fresh isolated temporary database and offline fixtures. AIS tests exercise binary frames, subscription, parsing, persistence and deduplication without a live key. They do not prove actual provider coverage.
 
-The [validation protocol](docs/VALIDATION_PROTOCOL.md) defines independent labels, event-level splits and leakage controls. `backend/app/evaluation.py` computes a reproducible heuristic news-only baseline against a supplied labelled corpus. A real labelled corpus and final measured validation report are still required by the synopsis. Do not report test-fixture performance as real historical accuracy.
+The [validation protocol](docs/VALIDATION_PROTOCOL.md) defines independent labels, event-level splits and leakage controls. `backend/app/evaluation.py` supports heuristic or Gemini news-only evaluation with actual extractor provenance, availability cutoffs and dataset hashes. A checked-in, provisionally source-reviewed three-window pilot and its [written report](docs/VALIDATION_REPORT.md) expose current errors. Its paraphrases and publication-time proxies are not an original historical feed or a final held-out benchmark.
+
+Reproduce the pilot from the repository root:
+
+```powershell
+.\.venv\Scripts\python.exe -m backend.app.evaluation backend/data/evaluation/pilot_cases.json --output output/evaluation/pilot_heuristic.json
+.\.venv\Scripts\python.exe -m backend.app.evaluation backend/data/evaluation/pilot_cases.json --extractor gemini --output output/evaluation/pilot_gemini.json
+```
+
+Gemini mode makes external requests unless validated extractions are cached. It labels any heuristic fallback honestly. A larger original-news corpus, reviewed labels and coverage-valid AIS data are required before claiming reliable full-system precision/recall or warning lead time. See the [demo script](docs/DEMO_SCRIPT.md) and [current limitations](docs/LIMITATIONS.md).
 
 This is an academic prototype. Add an appropriate licence before external reuse/distribution.

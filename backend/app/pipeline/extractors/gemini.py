@@ -41,7 +41,7 @@ class GeminiExtractor(BaseExtractor):
                 try:
                     values = self._request(chunk, strict=True)
                 except (httpx.HTTPError, ValueError, KeyError) as exc2:
-                    if self._is_rate_limit(exc2): self._rate_limited = True
+                    if self._is_rate_limit(exc2) or (isinstance(exc2,httpx.HTTPStatusError) and exc2.response.status_code>=500): self._rate_limited = True
                     LOGGER.warning("gemini retry failed; heuristic fallback for this batch: %s", exc2)
                     output.extend(self.fallback.extract(chunk)); continue
             for signal, value in zip(chunk, values): save(signal.signal_id, value)
@@ -72,6 +72,14 @@ class GeminiExtractor(BaseExtractor):
             timeout=60
         )
         response.raise_for_status(); text = response.json()["candidates"][0]["content"]["parts"][0]["text"]
-        values = [RiskExtraction.model_validate({**item, "extractor": settings.gemini_model}) for item in json.loads(text)]
+        decoded=json.loads(text)
+        if not isinstance(decoded,list): raise ValueError("Gemini response must be an array")
+        values=[]
+        for item in decoded:
+            if not isinstance(item,dict): raise ValueError("Invalid extraction object")
+            evidence=item.get("evidence")
+            if isinstance(evidence,str) and len(evidence)>200:
+                item={**item,"evidence":evidence[:196].rsplit(" ",1)[0]+"…","evidence_truncated":True}
+            values.append(RiskExtraction.model_validate({**item,"extractor":settings.gemini_model}))
         if len(values) != len(signals): raise ValueError("Gemini response count mismatch")
         return values

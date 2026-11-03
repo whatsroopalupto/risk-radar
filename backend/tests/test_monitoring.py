@@ -51,3 +51,25 @@ def test_cors_and_input_limits():
         assert response.headers["access-control-allow-origin"] == "http://localhost:5173"
         assert client.get("/api/signals?limit=-1").status_code == 422
         assert client.post("/api/ingest/run?window_hours=999").status_code == 422
+
+def test_total_news_outage_keeps_previous_scores(monkeypatch):
+    import json
+    from pathlib import Path
+    from app.schemas import Signal
+    payload=json.loads((Path(__file__).parents[1]/"data"/"fixtures"/"hormuz_june2025.json").read_text())
+    run_cycle(fixture_signals=[Signal.model_validate(item) for item in payload["signals"]],sources=[],reference_time=datetime.fromisoformat(payload["reference_time"]))
+    with TestClient(app) as client:
+        previous=client.get("/api/risk/routes").json()
+        def unavailable(*args): raise RuntimeError("Offline")
+        monkeypatch.setattr("app.pipeline.orchestrator.RSSConnector.fetch",unavailable)
+        monkeypatch.setattr("app.pipeline.orchestrator.GDELTConnector.fetch",unavailable)
+        result=client.post("/api/ingest/run").json()
+        assert result["data_quality"]=="news_unavailable_previous_risk_retained"
+        assert client.get("/api/risk/routes").json()==previous
+
+def test_illustrative_replay_never_exposes_placeholder_links_as_reporting():
+    with TestClient(app) as client:
+        client.post("/api/replay/hormuz_june2025")
+        values=client.get("/api/signals").json()
+        assert values and all(value["url"] is None for value in values)
+        assert all(value["source_name"].startswith("Synthetic fixture") for value in values)

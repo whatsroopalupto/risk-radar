@@ -1783,3 +1783,6 @@ body {
 .vessel-activity-tab table { width: 100%; border-collapse: collapse; }
 .vessel-activity-tab th, .vessel-activity-tab td { text-align: left; padding: 0.6rem; border-bottom: 1px solid var(--border-color, #d6dee7); }
 .network-node-card:focus-visible { outline: 2px solid #0072b2; outline-offset: 3px; }
+.tab-nav { overflow-x: auto; }
+.tab-button { flex: 0 0 auto; }
+#evidence-question { background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border-color, #d6dee7); }

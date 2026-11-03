@@ -1,0 +1,37 @@
+{
+  "run_id": "382223829ad24da7b72edcfa70bc0589",
+  "started_at": "2026-11-03T10:30:43.471571Z",
+  "finished_at": "2026-11-03T10:31:45.048492Z",
+  "per_source": {
+    "rss": {
+      "status": "ok",
+      "fetched": 48,
+      "error": null
+    },
+    "gdelt": {
+      "status": "unavailable",
+      "fetched": 0,
+      "error": "GDELT was unavailable or returned an invalid response"
+    },
+    "prices": {
+      "status": "ok",
+      "fetched": 1,
+      "error": null
+    },
+    "ais": {
+      "status": "connected",
+      "fetched": 0,
+      "error": null
+    }
+  },
+  "deduped": 3,
+  "filtered_out": 16,
+  "extracted": 29,
+  "extractor_used": "gemini-3.6-flash",
+  "errors": [
+    "GDELT was unavailable or returned an invalid response"
+  ],
+  "scenario_id": null,
+  "deferred": 0,
+  "data_quality": "ok"
+}

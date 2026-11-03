@@ -11,6 +11,9 @@ import SignalFeedTab from "./tabs/SignalFeedTab";
 import IngestionHistoryTab from "./tabs/IngestionHistoryTab";
 import GraphAboutTab from "./tabs/GraphAboutTab";
 import VesselActivityTab from "./tabs/VesselActivityTab";
+import EvidenceTab from "./tabs/EvidenceTab";
+import TradeDataTab from "./tabs/TradeDataTab";
+import ValidationTab from "./tabs/ValidationTab";
 
 function App() {
   const [activeTab, setActiveTab] = useState<TabId>("route-risk");
@@ -68,6 +71,9 @@ function App() {
 
         {activeTab === "graph" && <GraphAboutTab />}
         {activeTab === "vessels" && <VesselActivityTab refreshKey={refreshKey} />}
+        {activeTab === "evidence" && <EvidenceTab />}
+        {activeTab === "trade" && <TradeDataTab refreshKey={refreshKey} />}
+        {activeTab === "validation" && <ValidationTab />}
       </div>
     </main>
   );

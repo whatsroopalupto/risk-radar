@@ -53,7 +53,7 @@
           Supply-chain relationships between monitored suppliers, maritime
           routes, chokepoints, and refinery dependencies.
         </p>
-        <p>Refinery dependency shares are illustrative assumptions awaiting sourced trade data; exposure is a model estimate.</p>
+        <p>Supplier links represent possible geographic paths, not observed shipments. Refinery dependency shares are illustrative assumptions; national trade statistics do not determine refinery procurement.</p>
 
         <div className="graph-summary">
           <article className="graph-stat">

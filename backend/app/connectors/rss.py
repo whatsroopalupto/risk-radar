@@ -1,9 +1,10 @@
 """Primary RSS connector with timezone-safe date handling."""
 import hashlib, logging
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from urllib.parse import quote_plus, urlparse
 import feedparser
 import httpx
+from bs4 import BeautifulSoup
 from .base import BaseConnector
 from ..config import settings
 from ..pipeline.normalize import normalize_title
@@ -16,6 +17,8 @@ class RSSConnector(BaseConnector):
     def fetch(self, window_hours: int) -> list[Signal]:
         """Fetch configured Google News searches, skipping failed feeds."""
         signals: list[Signal] = []
+        succeeded=0
+        self.last_status="not_yet_run"
         feeds = [f"https://news.google.com/rss/search?q={quote_plus(query)}&hl=en-IN&gl=IN&ceid=IN:en" for query in settings.rss_queries] + settings.rss_feeds
         for feed in feeds:
             try:
@@ -23,8 +26,19 @@ class RSSConnector(BaseConnector):
                 response = httpx.get(feed, headers={"User-Agent": USER_AGENT}, timeout=FEED_TIMEOUT_SECONDS, follow_redirects=True)
                 response.raise_for_status()
                 parsed = feedparser.parse(response.content)
-                for entry in parsed.entries: signals.append(self._signal(entry))
+                if parsed.bozo and not parsed.entries:
+                    raise ValueError("Invalid RSS feed")
+                succeeded+=1
+                for entry in parsed.entries:
+                    if not getattr(entry,"published_parsed",None):
+                        continue
+                    signal=self._signal(entry)
+                    if signal.fetched_at-timedelta(hours=window_hours)<=signal.published_at<=signal.fetched_at+timedelta(minutes=5):
+                        signals.append(signal)
             except (OSError, ValueError, AttributeError, httpx.HTTPError) as exc: LOGGER.warning("rss feed unavailable %s: %s", feed, exc)
+        if succeeded==0:
+            raise RuntimeError("All configured RSS feeds were unavailable")
+        self.last_status="ok" if succeeded==len(feeds) else "partial"
         return signals
     def _signal(self, entry: object) -> Signal:
         fetched = datetime.now(timezone.utc)
@@ -58,5 +72,7 @@ class RSSConnector(BaseConnector):
         if published.tzinfo is None:
             published = published.replace(tzinfo=timezone.utc)
 
-        return Signal(signal_id=ident, source_type="news", source_name=domain, title=title, body=getattr(entry,"summary",None), url=url, published_at=published, fetched_at=fetched, raw=raw)
+        summary=getattr(entry,"summary",None)
+        body=BeautifulSoup(str(summary),"html.parser").get_text(" ",strip=True) if summary else None
+        return Signal(signal_id=ident, source_type="news", source_name=domain, title=title, body=body, url=url, published_at=published, fetched_at=fetched, raw=raw)
 
