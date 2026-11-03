@@ -15,6 +15,8 @@ export interface IngestRunStats {
   extractor_used: string;
   errors: string[];
   scenario_id?: string;
+  deferred?: number;
+  data_quality?: string;
 }
 
 export interface HealthResponse {
@@ -27,6 +29,10 @@ export interface HealthResponse {
   db_counts: Record<string, number>;
   version: string;
   last_run_time?: string;
+  risk_computed_at?: string;
+  dataset?: string;
+  provenance?: string;
+  latest_run?: IngestRunStats | null;
 }
 
 export interface GraphNode {

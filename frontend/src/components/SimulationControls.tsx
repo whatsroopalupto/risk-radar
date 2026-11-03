@@ -6,6 +6,7 @@ import {
   runIngestion,
 } from "../api/endpoints";
 import type { Scenario } from "../types/risk";
+import { apiClient } from "../api/client";
 
 interface SimulationControlsProps {
   onDataChanged: () => void;
@@ -107,6 +108,15 @@ function SimulationControls({
   return (
     <section className="simulation-controls">
       <h2>Simulation Controls</h2>
+      <button type="button" disabled={ingestionLoading || replayLoading} onClick={async () => {
+        try {
+          await apiClient("/api/display/live", { method: "POST" });
+          onDataChanged();
+          setMessage("Showing the saved live dataset. Check its timestamp before treating it as current.");
+        } catch {
+          setError("Unable to switch to live data.");
+        }
+      }}>Show saved live data</button>
 
       <p className="section-description">
         Run live news ingestion or replay historical escalation scenarios.

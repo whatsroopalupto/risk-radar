@@ -1,0 +1,55 @@
+{
+  "health": {
+    "status": "connected",
+    "fetched": 17,
+    "latest_observation": "2026-11-03 11:53:50.151979",
+    "stale": true,
+    "heartbeat_stale": false,
+    "detail": ""
+  },
+  "computed_at": "2026-11-03 15:47:46.970301+00:00",
+  "corridors": [
+    {
+      "id": "hormuz",
+      "observations_24h": 17,
+      "unique_vessels_24h": 4,
+      "first_observation": "2026-11-03 09:23:15.065979",
+      "latest_observation": "2026-11-03 11:53:50.151979",
+      "baseline_status": "collecting",
+      "baseline_target_days": 30,
+      "anomaly": null,
+      "features": {
+        "baseline_hours": 0,
+        "required_hours": 720,
+        "current_unique_vessels": 0,
+        "coverage_fraction": 0.0,
+        "status": "collecting",
+        "anomaly": null,
+        "limitation": "Observed Class A activity, not verified crude tanker flow; heartbeat coverage does not guarantee receiver coverage.",
+        "window_start": "2026-11-03T14:00:00+00:00",
+        "window_end": "2026-11-03T15:00:00+00:00"
+      }
+    },
+    {
+      "id": "red_sea",
+      "observations_24h": 0,
+      "unique_vessels_24h": 0,
+      "first_observation": null,
+      "latest_observation": null,
+      "baseline_status": "no_observations",
+      "baseline_target_days": 30,
+      "anomaly": null,
+      "features": {
+        "baseline_hours": 0,
+        "required_hours": 720,
+        "current_unique_vessels": 0,
+        "coverage_fraction": 0.0,
+        "status": "collecting",
+        "anomaly": null,
+        "limitation": "Observed Class A activity, not verified crude tanker flow; heartbeat coverage does not guarantee receiver coverage.",
+        "window_start": "2026-11-03T14:00:00+00:00",
+        "window_end": "2026-11-03T15:00:00+00:00"
+      }
+    }
+  ]
+}

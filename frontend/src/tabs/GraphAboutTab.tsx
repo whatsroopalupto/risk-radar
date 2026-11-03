@@ -53,6 +53,7 @@
           Supply-chain relationships between monitored suppliers, maritime
           routes, chokepoints, and refinery dependencies.
         </p>
+        <p>Supplier links represent possible geographic paths, not observed shipments. Refinery dependency shares are illustrative assumptions; national trade statistics do not determine refinery procurement.</p>
 
         <div className="graph-summary">
           <article className="graph-stat">
@@ -79,6 +80,17 @@
         </div>
 
         <div className="about-section">
+          <details>
+            <summary>Supply-chain connections as a table</summary>
+            <div className="vessel-table-scroll"><table>
+              <caption>Equivalent connections for the supply-chain diagram</caption>
+              <thead><tr><th scope="col">From</th><th scope="col">To</th></tr></thead>
+              <tbody>{graph?.edges.map((edge) => <tr key={`${edge.source}-${edge.target}`}>
+                <td>{String(graph.nodes.find((node) => node.id === edge.source)?.name ?? edge.source)}</td>
+                <td>{String(graph.nodes.find((node) => node.id === edge.target)?.name ?? edge.target)}</td>
+              </tr>)}</tbody>
+            </table></div>
+          </details>
           <h3>About the Risk Radar</h3>
 
           <p>

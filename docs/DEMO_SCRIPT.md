@@ -1,10 +1,15 @@
-# Demo script
+# Second-demo walkthrough
 
-1. Show `/docs`: the HTTP contract is inspectable; Phase 3 can replace the frontend.
-2. Show health: source degradation and extractor choice are visible; Phase 2 adds sources.
-3. Run RSS ingestion: independent source failures do not stop a cycle; Phase 2 adds AIS.
-4. Open signals: prose became validated facts; Phase 2 can use a different LLM.
-5. Expand score arithmetic: code, not LLM, assigns risk; Phase 3 evaluates it.
-6. Show routes: noisy-OR prevents duplicate inflation; Phase 2 adds richer graph data.
-7. Show refineries: dependency shares explain exposure; Phase 2 replaces approximations.
-8. Replay a fixture (Hormuz 2025 or Red Sea 2023): scenario clock preserves recency; Phase 3 adds quantitative backtesting.
+1. Run `run.bat`. Open React at `http://127.0.0.1:5173` and the API documentation at `http://127.0.0.1:8000/docs`. If live AIS is required, run its separate collector as described in the README.
+2. Explain the objective: evidence-backed early warning for India's crude supply routes, followed by transparent modelled refinery exposure. This is decision support, not a prediction that a route will close.
+3. Show the selected dataset, actual extractor mix, source states and **Risk calculated** timestamp. Explain unavailable GDELT and any heuristic fallback honestly. A configured Gemini key alone is not proof of successful AI extraction.
+4. Use **Run Live Ingestion** and inspect the funnel, route scores, signal evidence, analytics and refinery contributions. New articles are time-filtered; extraction batches are capped and deferred articles are labelled. A complete news-source outage retains older scores with a visible notice.
+5. Open **Official Trade Context**. Show PPAC's monthly/annual import data and EIA's dated national statistics, the source links, original units and reporting periods. Explain that these do not identify refinery procurement shares.
+6. Open **AIS Vessel Activity**. Show connection, last observations, vessel type if received, heartbeat coverage and baseline hours. If no reports arrive, demonstrate the honest empty state; do not call zero observations an empty corridor or a disruption. Baseline collection cannot be accelerated by fabricating positions.
+7. Open **Evidence & Context**, ask about Hormuz oil shipping and inspect source dates and citation links. Explain whether the result is generated RAG or retrieval-only fallback. It does not modify scores or recommend rerouting.
+8. Replay a saved scenario. Show the replay label and separate alerts, then return with **Show saved live data**. Explain that the Hormuz fixture includes a hypothetical escalation; it is not proof that the strait actually closed in June 2025.
+9. Open the graph, select a node and show the equivalent connections table. Explain possible supplier paths versus observed shipments and illustrative refinery dependency shares.
+10. Open **Historical Validation**. Show the actual pilot confusion counts and error cases, including missed disruptions. Do not claim high accuracy: the sample is tiny, uses provisional source-reviewed paraphrases and publication-time proxies, and is not a lead-time study or a held-out full-system benchmark. The written report is `docs/VALIDATION_REPORT.md`.
+11. Close with the remaining field-validation requirements: live AIS observations and a coverage-qualified baseline, independently reviewed original historical reporting with controls, and calibration evaluated on untouched events. Procurement simulation and automated rerouting remain Project-II.
+
+Fallback if live services are unavailable: use retained live snapshots, labelled historical replays, official trade snapshots and the checked-in evaluation reports. Keep the distinction between stored, replayed and newly fetched data visible.

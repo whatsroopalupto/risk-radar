@@ -1,0 +1,35 @@
+[
+  {
+    "case_id":"redsea_2024_june", "event_id":"redsea_shipping_crisis_2023_2024", "split":"test", "route_id":"red_sea_suez",
+    "window_start":"2024-06-10T00:00:00Z", "as_of":"2024-06-11T23:59:59Z", "disruption":true,
+    "label_sources":["https://www.eia.gov/todayinenergy/detail.php?id=62263"],
+    "label_rationale":"EIA documents shipping diversion away from Bab el-Mandeb and the Red Sea after attacks, with longer routes and increased travel time. Label target is an already documented shipping disruption, not a complete strait closure.",
+    "labelled_by":"Codex source review; independent human review pending", "label_review_status":"provisional_source_review",
+    "text_basis":"analyst_paraphrase_of_public_official_report", "availability_basis":"publication_date_proxy_not_actual_historical_fetch",
+    "signals":[{"signal_id":"eia-62263-pilot", "source_type":"news", "source_name":"eia.gov", "title":"Red Sea shipping attacks divert oil cargoes around Africa",
+      "body":"EIA reported on June 11, 2024 that attacks near Yemen had prompted commercial operators to avoid the Bab el-Mandeb and Red Sea. Oil shipments taking the Cape of Good Hope route increased, adding travel time and cost.",
+      "url":"https://www.eia.gov/todayinenergy/detail.php?id=62263", "published_at":"2024-06-11T00:00:00Z", "fetched_at":"2024-06-11T00:00:00Z", "raw":{"historical_availability_is_proxy":true}}]
+  },
+  {
+    "case_id":"redsea_2024_october", "event_id":"redsea_shipping_crisis_2023_2024", "split":"test", "route_id":"red_sea_suez",
+    "window_start":"2024-10-10T00:00:00Z", "as_of":"2024-10-11T23:59:59Z", "disruption":true,
+    "label_sources":["https://www.eia.gov/TodayinEnergy/detail.php?id=63446"],
+    "label_rationale":"EIA reports a substantial reduction in petroleum flow through Bab el-Mandeb and diversion after attacks. This window belongs to the same event family as the June case and is not an independent event.",
+    "labelled_by":"Codex source review; independent human review pending", "label_review_status":"provisional_source_review",
+    "text_basis":"analyst_paraphrase_of_public_official_report", "availability_basis":"publication_date_proxy_not_actual_historical_fetch",
+    "signals":[{"signal_id":"eia-63446-pilot", "source_type":"news", "source_name":"eia.gov", "title":"Bab el-Mandeb oil traffic falls as Red Sea attacks disrupt shipping",
+      "body":"EIA reported on October 11, 2024 that petroleum flows through Bab el-Mandeb averaged 4.0 million barrels a day through August 2024, versus 8.7 million in 2023. Attacks had led ships to take longer routes around Africa.",
+      "url":"https://www.eia.gov/TodayinEnergy/detail.php?id=63446", "published_at":"2024-10-11T00:00:00Z", "fetched_at":"2024-10-11T00:00:00Z", "raw":{"historical_availability_is_proxy":true}}]
+  },
+  {
+    "case_id":"hormuz_2025_june_control", "event_id":"hormuz_june_2025_tensions", "split":"test", "route_id":"hormuz_west_coast",
+    "window_start":"2025-06-15T00:00:00Z", "as_of":"2025-06-16T23:59:59Z", "disruption":false,
+    "label_sources":["https://www.eia.gov/todayinenergy/detail.php?id=65504"],
+    "label_rationale":"The June 16 EIA report explicitly says maritime traffic through Hormuz had not been blocked despite regional tensions. This is a non-blockage control as of that report, not proof that shipping faced no geopolitical risk.",
+    "labelled_by":"Codex source review; independent human review pending", "label_review_status":"provisional_source_review",
+    "text_basis":"analyst_paraphrase_of_public_official_report", "availability_basis":"publication_date_proxy_not_actual_historical_fetch",
+    "signals":[{"signal_id":"eia-65504-pilot", "source_type":"news", "source_name":"eia.gov", "title":"Hormuz oil shipping continues during regional tensions",
+      "body":"On June 16, 2025 EIA reported that maritime traffic through the Strait of Hormuz had not been blocked following regional tensions. Brent prices rose, showing concern about supply risk rather than confirmation of a closed passage.",
+      "url":"https://www.eia.gov/todayinenergy/detail.php?id=65504", "published_at":"2025-06-16T00:00:00Z", "fetched_at":"2025-06-16T00:00:00Z", "raw":{"historical_availability_is_proxy":true}}]
+  }
+]

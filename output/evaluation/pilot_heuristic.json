@@ -1,0 +1,132 @@
+{
+  "method": "heuristic-v1 news-only; no AIS or historical market corroboration",
+  "validation_status": "provisional_pilot_not_final_validation",
+  "unit": "route-window",
+  "split": "test",
+  "threshold": 30,
+  "sample_size": 3,
+  "positive_windows": 2,
+  "negative_windows": 1,
+  "metrics": {
+    "true_positive": 0,
+    "false_positive": 0,
+    "false_negative": 2,
+    "true_negative": 1,
+    "precision": null,
+    "recall": 0.0,
+    "f1": 0.0
+  },
+  "limitations": [
+    "Label validity requires human review of the cited sources.",
+    "Windows within an event are correlated; report event counts as well as window counts.",
+    "These are news-only metrics, not measured performance of the combined AIS system.",
+    "Publication-date proxies and paraphrased source text do not establish real historical ingestion or warning lead time.",
+    "Undefined metrics are null, not evidence of perfect performance."
+  ],
+  "distinct_events": 2,
+  "cases": [
+    {
+      "case_id": "redsea_2024_june",
+      "event_id": "redsea_shipping_crisis_2023_2024",
+      "route_id": "red_sea_suez",
+      "label": true,
+      "predicted": false,
+      "score": 12.282316937198178,
+      "available_articles": 1,
+      "excluded_unavailable_articles": 0,
+      "label_sources": [
+        "https://www.eia.gov/todayinenergy/detail.php?id=62263"
+      ],
+      "label_rationale": "EIA documents shipping diversion away from Bab el-Mandeb and the Red Sea after attacks, with longer routes and increased travel time. Label target is an already documented shipping disruption, not a complete strait closure.",
+      "label_review_status": "provisional_source_review",
+      "text_basis": "analyst_paraphrase_of_public_official_report",
+      "availability_basis": "publication_date_proxy_not_actual_historical_fetch",
+      "extractions": [
+        {
+          "is_relevant": true,
+          "event_type": "attack_on_vessel",
+          "severity": 0.9,
+          "affected_chokepoints": [
+            "bab_el_mandeb"
+          ],
+          "affected_countries": [
+            "Yemen"
+          ],
+          "is_speculative": false,
+          "confidence": 0.5,
+          "evidence": "Red Sea shipping attacks divert oil cargoes around Africa.",
+          "extractor": "heuristic-v1",
+          "evidence_truncated": false
+        }
+      ]
+    },
+    {
+      "case_id": "redsea_2024_october",
+      "event_id": "redsea_shipping_crisis_2023_2024",
+      "route_id": "red_sea_suez",
+      "label": true,
+      "predicted": false,
+      "score": 12.282316937198178,
+      "available_articles": 1,
+      "excluded_unavailable_articles": 0,
+      "label_sources": [
+        "https://www.eia.gov/TodayinEnergy/detail.php?id=63446"
+      ],
+      "label_rationale": "EIA reports a substantial reduction in petroleum flow through Bab el-Mandeb and diversion after attacks. This window belongs to the same event family as the June case and is not an independent event.",
+      "label_review_status": "provisional_source_review",
+      "text_basis": "analyst_paraphrase_of_public_official_report",
+      "availability_basis": "publication_date_proxy_not_actual_historical_fetch",
+      "extractions": [
+        {
+          "is_relevant": true,
+          "event_type": "attack_on_vessel",
+          "severity": 0.9,
+          "affected_chokepoints": [
+            "bab_el_mandeb"
+          ],
+          "affected_countries": [],
+          "is_speculative": false,
+          "confidence": 0.5,
+          "evidence": "Bab el-Mandeb oil traffic falls as Red Sea attacks disrupt shipping.",
+          "extractor": "heuristic-v1",
+          "evidence_truncated": false
+        }
+      ]
+    },
+    {
+      "case_id": "hormuz_2025_june_control",
+      "event_id": "hormuz_june_2025_tensions",
+      "route_id": "hormuz_west_coast",
+      "label": false,
+      "predicted": false,
+      "score": 1.8575108948231778,
+      "available_articles": 1,
+      "excluded_unavailable_articles": 0,
+      "label_sources": [
+        "https://www.eia.gov/todayinenergy/detail.php?id=65504"
+      ],
+      "label_rationale": "The June 16 EIA report explicitly says maritime traffic through Hormuz had not been blocked despite regional tensions. This is a non-blockage control as of that report, not proof that shipping faced no geopolitical risk.",
+      "label_review_status": "provisional_source_review",
+      "text_basis": "analyst_paraphrase_of_public_official_report",
+      "availability_basis": "publication_date_proxy_not_actual_historical_fetch",
+      "extractions": [
+        {
+          "is_relevant": true,
+          "event_type": "diplomatic_escalation",
+          "severity": 0.35,
+          "affected_chokepoints": [
+            "hormuz"
+          ],
+          "affected_countries": [],
+          "is_speculative": false,
+          "confidence": 0.5,
+          "evidence": "Hormuz oil shipping continues during regional tensions.",
+          "extractor": "heuristic-v1",
+          "evidence_truncated": false
+        }
+      ]
+    }
+  ],
+  "dataset_sha256": "4369b9e66523c73e650ac06608c94ac4767381faf194e026ba8bc8ed7ff0d764",
+  "evaluated_at": "2026-11-03T10:29:43.591052+00:00"
+}

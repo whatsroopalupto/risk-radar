@@ -17,6 +17,8 @@ export interface RouteRisk {
   band: RiskBand;
   contributing_signal_ids: string[];
   computed_at: string;
+  score_before_ais?: number | null;
+  ais_evidence?: { status: string; baseline_hours: number; required_hours: number } | null;
 }
 
 export interface RouteRiskTimeseriesPoint {

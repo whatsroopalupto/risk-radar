@@ -32,7 +32,7 @@ function StatusStrip({ refreshKey }: StatusStripProps) {
     },
     {
       label: "AIS vessel tracking",
-      value: "Planned for future release",
+      value: "Checking collector",
       tone: "muted",
     },
     {
@@ -63,7 +63,7 @@ function StatusStrip({ refreshKey }: StatusStripProps) {
 
         setStatusItems([
           {
-            label: "Classification engine",
+            label: "Configured extraction engine",
             value:
               engine === "heuristic-v1"
                 ? "Rule-based · heuristic-v1"
@@ -75,7 +75,7 @@ function StatusStrip({ refreshKey }: StatusStripProps) {
             value:
               rssStatus?.status === "ok"
                 ? `Active · ${rssStatus.fetched ?? 0} fetched`
-                : "Not yet run",
+                : rssStatus?.status?.replaceAll("_", " ") ?? "Not yet run",
             tone:
               rssStatus?.status === "ok"
                 ? "success"
@@ -88,7 +88,7 @@ function StatusStrip({ refreshKey }: StatusStripProps) {
                 ? gdeltStatus.fetched
                   ? `${gdeltStatus.fetched} results`
                   : "No new results"
-                : "Not yet run",
+                : gdeltStatus?.status?.replaceAll("_", " ") ?? "Not yet run",
             tone:
               gdeltStatus?.fetched
                 ? "success"
@@ -97,15 +97,13 @@ function StatusStrip({ refreshKey }: StatusStripProps) {
           {
             label: "AIS vessel tracking",
             value:
-              aisStatus?.status === "not_implemented_phase_2"
-                ? "Planned for future release"
-                : aisStatus?.status ?? "Unknown",
+              aisStatus?.status?.replaceAll("_", " ") ?? "Unknown",
             tone: "muted",
           },
           {
-            label: "Last updated",
-            value: health.last_run_time
-              ? new Date(health.last_run_time).toLocaleString("en-IN", {
+            label: "Risk calculated",
+            value: health.risk_computed_at
+              ? new Date(health.risk_computed_at).toLocaleString("en-IN", {
                 dateStyle: "short",
                 timeStyle: "short",
               })
@@ -114,7 +112,7 @@ function StatusStrip({ refreshKey }: StatusStripProps) {
           },
         ]);
       } catch {
-        // Keep the last successful status visible while refreshing.
+        setStatusItems([{ label: "API status", value: "Unavailable; displayed data may be stale", tone: "warning" }]);
       }
     }
 

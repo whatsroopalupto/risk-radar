@@ -9,7 +9,7 @@ interface EventCount {
   count: number;
 }
 
-function IntelligenceAnalyticsTab() {
+function IntelligenceAnalyticsTab({ refreshKey }: { refreshKey: number }) {
   const [signals, setSignals] = useState<RiskAssessment[]>([]);
   const [health, setHealth] = useState<HealthResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -37,7 +37,7 @@ function IntelligenceAnalyticsTab() {
     }
 
     loadAnalytics();
-  }, []);
+  }, [refreshKey]);
 
   if (loading) {
     return (

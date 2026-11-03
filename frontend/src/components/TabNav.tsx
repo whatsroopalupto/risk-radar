@@ -4,7 +4,12 @@ export type TabId =
   | "refinery"
   | "signals"
   | "history"
-  | "graph";
+  | "graph"
+  | "vessels"
+  | "evidence"
+  | "trade"
+  | "validation";
+// AIS always represents live observations, independently of historical news replay.
 
 interface Tab {
   id: TabId;
@@ -18,6 +23,10 @@ const tabs: Tab[] = [
   { id: "signals", label: "Signal Feed" },
   { id: "history", label: "Ingestion History" },
   { id: "graph", label: "Graph & About" },
+  { id: "vessels", label: "AIS Vessel Activity" },
+  { id: "evidence", label: "Evidence & Context" },
+  { id: "trade", label: "Official Trade Context" },
+  { id: "validation", label: "Historical Validation" },
 ];
 
 interface TabNavProps {

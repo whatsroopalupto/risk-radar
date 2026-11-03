@@ -1,10 +1,16 @@
-# Scoped limitations
+# Current limitations
 
-- AIS is stubbed: useful vessel features require weeks of baseline data, which Phase 1 cannot generate.
-- GDELT is optional because the development/demo network blocks it; connectors make it swappable.
-- Graph shares are **ILLUSTRATIVE — replace with PPAC monthly import data in Phase 2**.
-- Accuracy metrics wait until the feature set is frozen; AIS would invalidate earlier tuning.
-- Credibility is static; learned weights require a scored corpus produced in Phase 1.
-- SQLite is intentionally single-user and local.
-- Gemini free-tier rate limits cap how much of a large live run gets true AI classification; a sleep-based throttle plus a circuit breaker (fall back to the heuristic engine after the first 429, rather than retrying into the quota) keeps every run fast and honest regardless. A paid tier removes the ceiling; that's a Phase 2/3 cost decision, not a Phase 1 defect.
-- Live ingestion and the replay scenario intentionally share one display slot so both render through the same dashboard views; a LIVE DATA / REPLAY SCENARIO badge disambiguates which is currently shown. Separate namespaces for side-by-side comparison are a Phase 2 candidate.
+- The AIS key/subscription and real persisted positions in the Hormuz research box have been verified. Red Sea observations remain unavailable, and early reception does not establish sustained coverage. The collector must run over time to establish a qualified baseline.
+- AIS activity is observed Class A traffic. Static type can identify a reported tanker category, not crude cargo, actual loading or a completed transit. Heartbeats do not prove receiver coverage; total observation gaps are excluded from anomaly scoring.
+- The activity-drop and score-fusion rules are implemented and tested on synthetic unit scenarios, not validated against labelled real AIS disruptions. The default baseline requires 30 days of qualified hours; the UI abstains while collecting.
+- GDELT was unavailable in the live verification. RSS, Brent and Gemini each succeeded; Gemini also showed transient service failures, with retries/fallback. Source availability and quotas can change.
+- PPAC/EIA data is ingested from official public publications. These are dated national statistics, not live refinery inventory/procurement feeds. Parsers stop rather than guess after a layout change. A failed refresh can serve the previous successful snapshot with that fact labelled.
+- Supplier graph edges are possible geographic paths. Refinery route dependencies are illustrative assumptions. National import shares cannot justify substituting values for individual refinery dependencies.
+- Risk scores are transparent rule-based estimates, not calibrated disruption probabilities. Noisy-OR can amplify correlated reports even after headline deduplication. Static credibility weights and heuristic confidence require independent evaluation.
+- The three-window historical pilot is provisional. Both news-only runs missed its two positive windows at threshold 30. It is neither representative accuracy nor an early-warning lead-time result. See the report before presenting any metric.
+- RAG may miss semantic matches because retrieval is lexical and capped at 5,000 recent articles. Source-ID validation cannot prove factual support for every generated sentence. Generation failures fall back to source excerpts.
+- SQLite, cross-process file locks and shared display selection support a local single-user installation, not a distributed service. Data is retained by default; plan disk capacity before continuous high-volume AIS collection. No automated deletion policy has been applied.
+- The historical `render.yaml` blueprint targets the former Streamlit deployment and is not verified for the current React application. Local execution is the supported demo path. Production hosting, authentication and multi-user operation are separate work.
+- The npm audit has 12 moderate development-tool findings after compatible high-severity fixes. Forced major dependency changes were not applied.
+
+Scenario simulation and automated procurement rerouting remain Project-II.

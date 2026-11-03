@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { getRefineryExposures } from "../api/endpoints";
 import type { RefineryExposure } from "../types/risk";
 
-function RefineryExposureTab() {
+function RefineryExposureTab({ refreshKey }: { refreshKey: number }) {
   const [refineries, setRefineries] = useState<RefineryExposure[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -27,7 +27,7 @@ function RefineryExposureTab() {
     }
 
     loadRefineries();
-  }, []);
+  }, [refreshKey]);
 
   if (loading) {
     return (

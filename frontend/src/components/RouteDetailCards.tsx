@@ -8,6 +8,7 @@ interface RouteDetail {
   level: "High" | "Medium" | "Low";
   chokepoints: string;
   signals: number;
+  ais: string;
 }
 
 interface RouteDetailCardsProps {
@@ -38,6 +39,7 @@ function RouteDetailCards({ refreshKey }: RouteDetailCardsProps) {
               ? route.chokepoints.join(", ")
               : "none",
           signals: route.contributing_signal_ids.length,
+          ais: route.ais_evidence ? `${route.ais_evidence.status.replaceAll("_", " ")} · ${route.ais_evidence.baseline_hours}/${route.ais_evidence.required_hours} baseline hours · score before AIS ${(route.score_before_ais ?? route.composite_score).toFixed(1)}` : "Not applied to this dataset/route",
         }));
 
         setRoutes(mappedRoutes);
@@ -82,6 +84,7 @@ function RouteDetailCards({ refreshKey }: RouteDetailCardsProps) {
               <div className="route-detail-meta">
                 Contributing signals: {route.signals}
               </div>
+              <div className="route-detail-meta">AIS corroboration: {route.ais}</div>
             </article>
           ))}
         </div>

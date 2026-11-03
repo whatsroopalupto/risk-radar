@@ -1,0 +1,10 @@
+{
+  "checked_at": "2026-11-03T16:07:36.016287+00:00",
+  "dataset": "live",
+  "mode": "retrieval_only",
+  "generation_status": "provider_http_503",
+  "model": null,
+  "retrieved_sources": 5,
+  "paragraphs": 5,
+  "all_citations_resolve": true
+}

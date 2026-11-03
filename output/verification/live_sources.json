@@ -1,0 +1,23 @@
+{
+  "checked_at": "2026-11-03T10:12:51.414652+00:00",
+  "sources": {
+    "rss": {
+      "status": "ok",
+      "articles": 56,
+      "latest_publication": "2026-11-03T09:06:57+00:00"
+    },
+    "gdelt": {
+      "status": "unavailable",
+      "error_type": "RuntimeError"
+    },
+    "gemini": {
+      "status": "ok",
+      "model": "gemini-3.6-flash",
+      "valid_extractions": 1
+    },
+    "brent": {
+      "status": "ok",
+      "change_pct": 0.9258387437080406
+    }
+  }
+}
