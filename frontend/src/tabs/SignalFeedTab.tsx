@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { getSignals } from "../api/endpoints";
 import type { RiskAssessment } from "../types/signals";
 
-function SignalFeedTab() {
+function SignalFeedTab({ refreshKey }: { refreshKey: number }) {
   const [signals, setSignals] = useState<RiskAssessment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -25,7 +25,7 @@ function SignalFeedTab() {
     }
 
     loadSignals();
-  }, []);
+  }, [refreshKey]);
 
   if (loading) {
     return (
@@ -74,7 +74,7 @@ function SignalFeedTab() {
                 <div
                   className={`signal-risk risk-${signal.band}`}
                 >
-                  {signal.final_score.toFixed(1)} / 100
+                  {(signal.final_score * 100).toFixed(1)} / 100
                 </div>
               </div>
 

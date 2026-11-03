@@ -27,6 +27,9 @@ export interface HealthResponse {
   db_counts: Record<string, number>;
   version: string;
   last_run_time?: string;
+  dataset?: string;
+  provenance?: string;
+  latest_run?: IngestRunStats | null;
 }
 
 export interface GraphNode {

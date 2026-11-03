@@ -2,6 +2,7 @@ import RouteRiskChart from "../components/charts/RouteRiskChart";
 import RiskTrendChart from "../components/charts/RiskTrendChart";
 import SimulationControls from "../components/SimulationControls";
 import RouteDetailCards from "../components/RouteDetailCards";
+import RiskAlerts from "../components/RiskAlerts";
 
 interface RouteRiskTabProps {
   refreshKey: number;
@@ -32,6 +33,7 @@ function RouteRiskTab({
         </div>
       </section>
       <RouteDetailCards refreshKey={refreshKey} />
+      <RiskAlerts refreshKey={refreshKey} />
     </>
   );
 }

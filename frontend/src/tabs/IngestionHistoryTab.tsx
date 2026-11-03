@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { getIngestionHistory } from "../api/endpoints";
 import type { IngestRunStats } from "../types/api";
 
-function IngestionHistoryTab() {
+function IngestionHistoryTab({ refreshKey }: { refreshKey: number }) {
   const [runs, setRuns] = useState<IngestRunStats[]>([]);
   const [historyLimit, setHistoryLimit] = useState(20);
   const [loading, setLoading] = useState(true);
@@ -28,7 +28,7 @@ function IngestionHistoryTab() {
     }
 
     loadHistory();
-  }, [historyLimit]);
+  }, [historyLimit, refreshKey]);
 
   if (loading) {
     return (

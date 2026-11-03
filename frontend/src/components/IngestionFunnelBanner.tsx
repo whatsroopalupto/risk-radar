@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 
-import { getIngestionHistory } from "../api/endpoints";
-import type { IngestRunStats } from "../types/api";
+import { getHealth } from "../api/endpoints";
+import type { IngestRunStats, HealthResponse } from "../types/api";
 
 function formatScenarioName(scenarioId: string) {
   return scenarioId
@@ -19,14 +19,14 @@ function IngestionFunnelBanner({
 }: IngestionFunnelBannerProps) {
   const [latestRun, setLatestRun] = useState<IngestRunStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [unverified, setUnverified] = useState(false);
 
   useEffect(() => {
     async function loadLatestRun() {
       try {
-        const history =
-          (await getIngestionHistory(1)) as IngestRunStats[];
-
-        setLatestRun(history[0] ?? null);
+        const health = (await getHealth()) as HealthResponse;
+        setLatestRun(health.latest_run ?? null);
+        setUnverified(health.provenance === "legacy_snapshot_unverified");
       } catch (error) {
         console.error(
           "Failed to load latest ingestion run:",
@@ -45,7 +45,7 @@ function IngestionFunnelBanner({
       <span className="live-badge">
         {latestRun?.scenario_id
           ? `REPLAY: ${formatScenarioName(latestRun.scenario_id)}`
-          : "LIVE DATA"}
+          : unverified ? "UNVERIFIED SAVED DATA" : "LIVE RUN"}
       </span>
 
       <span className="funnel-label">Latest run funnel</span>
@@ -56,15 +56,15 @@ function IngestionFunnelBanner({
         ) : latestRun ? (
           <>
             <strong>
-              {Object.values(latestRun.per_source).reduce(
-                (total, source) => total + source.fetched,
+              {Object.entries(latestRun.per_source).reduce(
+                (total, [name, source]) => total + (name === "prices" ? 0 : source.fetched),
                 0,
               )}
             </strong>{" "}
             fetched →{" "}
             <strong>
-              {Object.values(latestRun.per_source).reduce(
-                (total, source) => total + source.fetched,
+              {Object.entries(latestRun.per_source).reduce(
+                (total, [name, source]) => total + (name === "prices" ? 0 : source.fetched),
                 0,
               ) - latestRun.deduped}
             </strong>{" "}
@@ -73,7 +73,7 @@ function IngestionFunnelBanner({
             extracted &amp; scored
           </>
         ) : (
-          "No ingestion runs yet"
+          "Saved assessments have no matching run metadata; freshness is unverified."
         )}
       </span>
     </section>

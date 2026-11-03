@@ -143,7 +143,7 @@ function RiskTrendChart({ refreshKey }: RiskTrendChartProps) {
       <h2>Risk Trend Over Time</h2>
 
       <p className="section-description">
-        Cumulative-to-date noisy-OR of news signals per route, day by day.
+        News risk (0–100). Live data uses retained daily snapshots; replay and legacy data reconstruct cumulative news evidence.
       </p>
 
       {loading && <p>Loading risk trend data...</p>}

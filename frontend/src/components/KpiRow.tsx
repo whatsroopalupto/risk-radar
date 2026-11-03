@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import KpiCard from "./KpiCard";
 import {
   getHealth,
-  getIngestionHistory,
   getRefineryExposures,
   getRouteRisks,
 } from "../api/endpoints";
@@ -14,7 +13,6 @@ import type {
 } from "../types/risk";
 import type {
   HealthResponse,
-  IngestRunStats,
 } from "../types/api";
 
 interface KpiRowProps {
@@ -29,22 +27,24 @@ function KpiRow({ refreshKey }: KpiRowProps) {
   const [storedSignals, setStoredSignals] = useState(0);
   const [latestExtracted, setLatestExtracted] = useState(0);
   const [aiShare, setAiShare] = useState(0);
+  const [highRouteCount, setHighRouteCount] = useState(0);
+  const [aiCount, setAiCount] = useState(0);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     async function loadKpis() {
       try {
-        const [routes, refineries, health, history] =
+        const [routes, refineries, health] =
           await Promise.all([
             getRouteRisks(),
             getRefineryExposures(),
             getHealth(),
-            getIngestionHistory(1),
           ]);
 
         const routeData = routes as RouteRisk[];
         const refineryData = refineries as RefineryExposure[];
         const healthData = health as HealthResponse;
-        const historyData = history as IngestRunStats[];
+        setError(false);
 
         const highest = routeData.reduce<RouteRisk | null>(
           (current, route) =>
@@ -67,13 +67,14 @@ function KpiRow({ refreshKey }: KpiRowProps) {
         setHighestRoute(highest);
         setPeakRefinery(peak);
         setRouteCount(routeData.length);
+        setHighRouteCount(routeData.filter((route) => route.band === "high").length);
 
         setStoredSignals(
           healthData.db_counts?.assessments ?? 0,
         );
 
         setLatestExtracted(
-          historyData[0]?.extracted ?? 0,
+          healthData.db_counts?.assessments ?? 0,
         );
 
         const extractorMix = healthData.extractor_mix ?? {};
@@ -84,12 +85,9 @@ function KpiRow({ refreshKey }: KpiRowProps) {
             0,
         );
 
-        const geminiCount =
-          typeof extractorMix["gemini"] === "number"
-            ? extractorMix["gemini"]
-            : typeof extractorMix["gemini-v1"] === "number"
-              ? extractorMix["gemini-v1"]
-              : 0;
+        const geminiCount = Object.entries(extractorMix).reduce(
+          (sum, [name, count]) => sum + (name.startsWith("gemini") && typeof count === "number" ? count : 0), 0);
+        setAiCount(geminiCount);
 
         setAiShare(
           totalClassified > 0
@@ -97,6 +95,7 @@ function KpiRow({ refreshKey }: KpiRowProps) {
             : 0,
         );
       } catch (error) {
+        setError(true);
         console.error("Failed to load KPI data:", error);
       }
     }
@@ -106,6 +105,7 @@ function KpiRow({ refreshKey }: KpiRowProps) {
 
   return (
     <section className="kpi-row">
+      {error && <p role="status">Unable to refresh risk indicators. Values may be stale.</p>}
       <KpiCard
         label="Highest route risk"
         value={
@@ -145,16 +145,14 @@ function KpiRow({ refreshKey }: KpiRowProps) {
       />
 
       <KpiCard
-        label="Ingested risk signals"
+        label="Displayed risk signals"
         value={String(latestExtracted)}
-        description={`Stored in database: ${storedSignals}`}
+        description={`Current dataset: ${storedSignals} stored assessments`}
       />
 
       <KpiCard
         label="High-risk routes"
-        value={String(
-          routeDataCount(routeCount, highestRoute),
-        )}
+        value={String(highRouteCount)}
         description={`${routeCount} supply routes monitored`}
         tone="high"
       />
@@ -162,19 +160,10 @@ function KpiRow({ refreshKey }: KpiRowProps) {
       <KpiCard
         label="AI-classified share"
         value={`${aiShare.toFixed(0)}%`}
-        description={`AI-classified signals: ${Math.round(
-          (aiShare / 100) * latestExtracted,
-        )} / ${latestExtracted}`}
+        description={`AI-classified signals: ${aiCount} / ${latestExtracted}`}
       />
     </section>
   );
-}
-
-function routeDataCount(
-  _routeCount: number,
-  highestRoute: RouteRisk | null,
-) {
-  return highestRoute?.band === "high" ? 1 : 0;
 }
 
 export default KpiRow;

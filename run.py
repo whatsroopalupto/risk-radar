@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import socket
+import shutil
 import subprocess
 import sys
 import time
@@ -13,7 +14,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 PYTHON = ROOT / ".venv" / "Scripts" / "python.exe"
 API_URL = "http://127.0.0.1:8000"
-DASH_URL = "http://127.0.0.1:8501"
+DASH_URL = "http://127.0.0.1:5173"
 
 
 def port_in_use(port: int) -> bool:
@@ -40,60 +41,36 @@ def python_exe() -> str:
 
 def main() -> None:
     py = python_exe()
-    backend: subprocess.Popen[bytes] | None = None
-
-    if port_in_use(8000):
-        print("Backend already running on port 8000.")
-    else:
-        backend = subprocess.Popen(
-            [py, "-m", "uvicorn", "app.main:app", "--host", "127.0.0.1", "--port", "8000"],
-            cwd=str(ROOT / "backend"),
-        )
-        print("Started backend at", API_URL)
-
-    wait_for(f"{API_URL}/api/health")
-
-    if port_in_use(8501):
-        print("Dashboard already running. Opening browser.")
-        webbrowser.open(DASH_URL)
-        if backend is not None:
-            print("Backend is running. Close this window to stop it.")
-            try:
-                backend.wait()
-            except KeyboardInterrupt:
-                backend.terminate()
-        return
-
-    dashboard = subprocess.Popen(
-        [
-            py,
-            "-m",
-            "streamlit",
-            "run",
-            "app.py",
-            "--server.port",
-            "8501",
-            "--server.address",
-            "127.0.0.1",
-            "--server.headless",
-            "true",
-            "--browser.gatherUsageStats",
-            "false",
-        ],
-        cwd=str(ROOT / "dashboard"),
-        stdin=subprocess.DEVNULL,
-    )
+    node = shutil.which("node")
+    vite = ROOT / "frontend" / "node_modules" / "vite" / "bin" / "vite.js"
+    if not node or not vite.exists():
+        raise SystemExit("Install Node.js, then run npm ci inside frontend before launching.")
+    children = []
     try:
+        if not port_in_use(8000):
+            children.append(subprocess.Popen(
+                [py, "-m", "uvicorn", "backend.app.main:app", "--host", "127.0.0.1", "--port", "8000"],
+                cwd=str(ROOT)))
+        wait_for(f"{API_URL}/api/health")
+        if not port_in_use(5173):
+            children.append(subprocess.Popen(
+                [node, str(vite), "--host", "127.0.0.1", "--port", "5173", "--strictPort"],
+                cwd=str(ROOT / "frontend"), stdin=subprocess.DEVNULL))
         wait_for(DASH_URL)
         webbrowser.open(DASH_URL)
-        print("Dashboard:", DASH_URL)
-        dashboard.wait()
+        print("React dashboard:", DASH_URL, "\nPress Ctrl+C to stop services started by this launcher.")
+        while children and all(child.poll() is None for child in children):
+            time.sleep(0.5)
     except KeyboardInterrupt:
         pass
     finally:
-        dashboard.terminate()
-        if backend is not None:
-            backend.terminate()
+        for child in reversed(children):
+            if child.poll() is None:
+                child.terminate()
+                try:
+                    child.wait(timeout=5)
+                except subprocess.TimeoutExpired:
+                    child.kill()
 
 
 if __name__ == "__main__":

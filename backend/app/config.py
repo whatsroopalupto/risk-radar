@@ -10,9 +10,13 @@ class Settings(BaseSettings):
     gemini_api_key: str = ""
     extractor: str = "auto"
     gemini_model: str = "gemini-3.6-flash"
-    database_url: str = "sqlite:///./risk_radar.db"
+    database_url: str = "sqlite:///" + (Path(__file__).resolve().parents[2] / "risk_radar.db").as_posix()
     api_base_url: str = "http://localhost:8000"
     rss_queries: list[str] = DEFAULT_RSS_QUERIES
     rss_feeds: list[str] = []
+    cors_origins: list[str] = ["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:8501", "http://127.0.0.1:8501"]
+    aisstream_api_key: str = ""
+    ais_stale_minutes: int = 15
+    ais_baseline_days: int = 30
 
 settings = Settings()

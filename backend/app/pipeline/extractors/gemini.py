@@ -67,7 +67,7 @@ class GeminiExtractor(BaseExtractor):
         )
         url = f"https://generativelanguage.googleapis.com/v1beta/models/{settings.gemini_model}:generateContent"
         response = httpx.post(
-            url, params={"key": self.api_key},
+            url, headers={"x-goog-api-key": self.api_key},
             json={"contents": [{"parts": [{"text": prompt}]}], "generationConfig": {"responseMimeType": "application/json", "temperature": 0, "thinkingConfig": {"thinkingLevel": "low"}}},
             timeout=60
         )

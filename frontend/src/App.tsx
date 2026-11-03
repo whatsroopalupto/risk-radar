@@ -10,10 +10,15 @@ import RefineryExposureTab from "./tabs/RefineryExposureTab";
 import SignalFeedTab from "./tabs/SignalFeedTab";
 import IngestionHistoryTab from "./tabs/IngestionHistoryTab";
 import GraphAboutTab from "./tabs/GraphAboutTab";
+import VesselActivityTab from "./tabs/VesselActivityTab";
 
 function App() {
   const [activeTab, setActiveTab] = useState<TabId>("route-risk");
   const [refreshKey, setRefreshKey] = useState(0);
+  useEffect(() => {
+    const timer = window.setInterval(() => setRefreshKey((value) => value + 1), 30000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   const [theme, setTheme] = useState(
     () => localStorage.getItem("risk-radar-theme") || "light",
@@ -53,15 +58,16 @@ function App() {
           />
         )}
 
-        {activeTab === "analytics" && <IntelligenceAnalyticsTab />}
+        {activeTab === "analytics" && <IntelligenceAnalyticsTab refreshKey={refreshKey} />}
 
-        {activeTab === "refinery" && <RefineryExposureTab />}
+        {activeTab === "refinery" && <RefineryExposureTab refreshKey={refreshKey} />}
 
-        {activeTab === "signals" && <SignalFeedTab />}
+        {activeTab === "signals" && <SignalFeedTab refreshKey={refreshKey} />}
 
-        {activeTab === "history" && <IngestionHistoryTab />}
+        {activeTab === "history" && <IngestionHistoryTab refreshKey={refreshKey} />}
 
         {activeTab === "graph" && <GraphAboutTab />}
+        {activeTab === "vessels" && <VesselActivityTab refreshKey={refreshKey} />}
       </div>
     </main>
   );

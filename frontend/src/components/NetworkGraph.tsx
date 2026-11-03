@@ -32,6 +32,7 @@ function NetworkGraph({ graph }: NetworkGraphProps) {
     const containerRef = useRef<HTMLDivElement>(null);
     const nodeRefs = useRef<Record<string, HTMLDivElement | null>>({});
     const [lines, setLines] = useState<GraphLine[]>([]);
+    const [size, setSize] = useState({ width: 1000, height: 600 });
     const [hoveredNode, setHoveredNode] = useState<string | null>(null);
     const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
 
@@ -44,6 +45,7 @@ function NetworkGraph({ graph }: NetworkGraphProps) {
             }
 
             const containerRect = container.getBoundingClientRect();
+            setSize({ width: containerRect.width, height: containerRect.height });
 
             const nextLines = graph.edges
                 .filter(
@@ -134,8 +136,7 @@ function NetworkGraph({ graph }: NetworkGraphProps) {
             <svg
                 className="network-graph-lines"
                 aria-hidden="true"
-                viewBox={`0 0 ${containerRef.current?.clientWidth ?? 1000} ${containerRef.current?.clientHeight ?? 600
-                    }`}
+                viewBox={`0 0 ${size.width} ${size.height}`}
                 preserveAspectRatio="none"
             >
                 {lines.map((line, index) => {
@@ -187,6 +188,17 @@ function NetworkGraph({ graph }: NetworkGraphProps) {
                                         setHoveredNode(null)
                                     }
                                     onClick={() => setSelectedNode(node)}
+                                    role="button"
+                                    tabIndex={0}
+                                    aria-pressed={selectedNode?.id === node.id}
+                                    onFocus={() => setHoveredNode(node.id)}
+                                    onBlur={() => setHoveredNode(null)}
+                                    onKeyDown={(event) => {
+                                        if (event.key === "Enter" || event.key === " ") {
+                                            event.preventDefault();
+                                            setSelectedNode(node);
+                                        }
+                                    }}
                                     style={{
                                         opacity: isConnected(node.id)
                                             ? 1
