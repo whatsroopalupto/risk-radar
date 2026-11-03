@@ -152,6 +152,7 @@ def activity_summary(now: datetime | None = None) -> dict:
                     "ship_type":profiles.get(r.mmsi)}
                     for r in recent]})
     return {"health":health, "computed_at":now, "corridors":corridors,
+            "score_fusion_enabled":settings.ais_score_fusion_enabled,
             "scope":"Observed Class A vessel positions; tanker classification uses received static ship type when available, not verified crude cargo or completed transits.",
             "limitation":"Anomalies require a coverage-qualified baseline and current observations. Missing AIS is not evidence of disruption; zero-observation windows are excluded from anomaly scoring."}
 

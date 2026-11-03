@@ -3,7 +3,7 @@
   "validation_status": "provisional_pilot_not_final_validation",
   "unit": "route-window",
   "split": "test",
-  "threshold": 30,
+  "threshold": 30.0,
   "sample_size": 3,
   "positive_windows": 2,
   "negative_windows": 1,
@@ -21,7 +21,8 @@
     "Windows within an event are correlated; report event counts as well as window counts.",
     "These are news-only metrics, not measured performance of the combined AIS system.",
     "Publication-date proxies and paraphrased source text do not establish real historical ingestion or warning lead time.",
-    "Undefined metrics are null, not evidence of perfect performance."
+    "Undefined metrics are null, not evidence of perfect performance.",
+    "Research event links supply context only; CSV risk labels are not converted into disruption ground truth. Only the separately source-reviewed pilot windows are scored."
   ],
   "distinct_events": 2,
   "cases": [
@@ -58,7 +59,8 @@
           "extractor": "heuristic-v1",
           "evidence_truncated": false
         }
-      ]
+      ],
+      "research_event_id": "HIST-2023-11-19"
     },
     {
       "case_id": "redsea_2024_october",
@@ -91,7 +93,8 @@
           "extractor": "heuristic-v1",
           "evidence_truncated": false
         }
-      ]
+      ],
+      "research_event_id": "HIST-2023-11-19"
     },
     {
       "case_id": "hormuz_2025_june_control",
@@ -124,9 +127,44 @@
           "extractor": "heuristic-v1",
           "evidence_truncated": false
         }
-      ]
+      ],
+      "research_event_id": "HIST-2025-06-13"
     }
   ],
-  "dataset_sha256": "4369b9e66523c73e650ac06608c94ac4767381faf194e026ba8bc8ed7ff0d764",
-  "evaluated_at": "2026-11-03T10:29:43.591052+00:00"
+  "dataset_sha256": "243e80b72b5e5a76c10a82d4997dc203367347c1d12864961f60f2ff2d679469",
+  "evaluated_at": "2026-11-03T17:41:41.068049+00:00",
+  "research_register_sha256": "0f5ea759082bba00d72c6707cad4053c3e76d1196abc08267cc0429b4db2c387",
+  "research_register_audit": {
+    "valid": true,
+    "errors": [],
+    "warnings": [
+      "HIST-2019-06-01: labels require independent review before benchmark use",
+      "HIST-2019-09-14: labels require independent review before benchmark use",
+      "HIST-2021-03-23: labels require independent review before benchmark use",
+      "HIST-2022-02-24: labels require independent review before benchmark use",
+      "HIST-2023-11-19: labels require independent review before benchmark use",
+      "HIST-2024-04-13: labels require independent review before benchmark use",
+      "HIST-2025-06-13: labels require independent review before benchmark use",
+      "SRC-2019-HORMUZ-02: replace broad landing page with a direct claim citation",
+      "SRC-2019-HORMUZ-03: replace broad landing page with a direct claim citation",
+      "SRC-2019-ARAMCO-02: replace broad landing page with a direct claim citation",
+      "SRC-2019-ARAMCO-03: replace broad landing page with a direct claim citation",
+      "SRC-2021-SUEZ-01: replace broad landing page with a direct claim citation",
+      "SRC-2021-SUEZ-02: replace broad landing page with a direct claim citation",
+      "SRC-2021-SUEZ-03: replace broad landing page with a direct claim citation",
+      "SRC-2022-UKRAINE-01: replace broad landing page with a direct claim citation",
+      "SRC-2022-UKRAINE-02: replace broad landing page with a direct claim citation",
+      "SRC-2023-REDSEA-01: replace broad landing page with a direct claim citation",
+      "SRC-2023-REDSEA-02: replace broad landing page with a direct claim citation",
+      "SRC-2023-REDSEA-03: replace broad landing page with a direct claim citation",
+      "SRC-2024-MSC-01: replace broad landing page with a direct claim citation",
+      "SRC-2024-MSC-02: replace broad landing page with a direct claim citation",
+      "SRC-2024-MSC-03: replace broad landing page with a direct claim citation",
+      "SRC-2025-IRAN-02: replace broad landing page with a direct claim citation",
+      "SRC-2025-IRAN-03: replace broad landing page with a direct claim citation"
+    ],
+    "event_count": 7,
+    "source_count": 21,
+    "duplicate_checks": {}
+  }
 }

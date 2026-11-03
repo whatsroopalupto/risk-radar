@@ -7,6 +7,7 @@ interface Vessel {
   vessel_class?: string;
 }
 interface Activity {
+  score_fusion_enabled: boolean;
   health: { status: string; stale: boolean; detail: string };
   scope: string; limitation: string; computed_at: string;
   corridors: { id: string; unique_vessels_24h: number; observations_24h: number;
@@ -32,6 +33,7 @@ export default function VesselActivityTab({ refreshKey }: { refreshKey: number }
     {data && <>
       <p>Collector: <strong>{data.health.status.replaceAll("_", " ")}</strong> · Position data: <strong>{data.health.stale ? "stale or unavailable" : "recent"}</strong></p>
       <p>{data.health.detail}</p>
+      <p>AIS contribution to route scores: {data.score_fusion_enabled ? "experimental fusion enabled; coverage gates still apply" : "disabled pending baseline validation; observations remain available"}.</p>
       <p>{data.scope}</p>
       <p>{data.limitation}</p>
       <p>Live AIS observations are independent of the news replay selected elsewhere. Updated {date(data.computed_at)}.</p>

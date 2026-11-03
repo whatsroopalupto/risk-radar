@@ -84,7 +84,7 @@ def run_cycle(window_hours: int = 24, sources: list[str] | None = None, fixture_
         corridor="hormuz" if "hormuz" in route["chokepoints"] else "red_sea" if "bab_el_mandeb" in route["chokepoints"] else None
         features=ais_by_corridor.get(corridor)
         before_ais=composite
-        if features:
+        if features and settings.ais_score_fusion_enabled:
             from .vessel_features import fuse_activity
             composite=fuse_activity(composite,news,features)
         routes.append(RouteRisk(route_id=route["id"],name=route["name"],chokepoints=route["chokepoints"],news_score=news,market_score=price or 0,composite_score=composite,band=band_for_score(composite),contributing_signal_ids=[item.signal_id for item in route_assessments],computed_at=reference_time,ais_evidence=features,score_before_ais=before_ais))

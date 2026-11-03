@@ -2,6 +2,16 @@ from fastapi.testclient import TestClient
 from app.main import app
 def test_health():
  with TestClient(app) as client: assert client.get("/api/health").status_code==200
+
+def test_validation_register_is_separate_from_pilot_metrics():
+ with TestClient(app) as client:
+  response=client.get("/api/validation")
+  assert response.status_code==200
+  payload=response.json()
+  assert payload["historical_dataset"]["event_count"]==7
+  assert payload["historical_dataset"]["valid"]
+  assert payload["historical_dataset"]["warnings"]
+  assert all(report["sample_size"]==3 for report in payload["reports"])
 def test_graph():
  with TestClient(app) as client: assert client.get("/api/graph").status_code==200
 def test_scenarios():

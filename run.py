@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import socket
+import argparse
 import shutil
 import subprocess
 import sys
@@ -40,6 +41,11 @@ def python_exe() -> str:
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--monitor", action="store_true", help="Poll news and trade every 15 minutes; may use Gemini quota")
+    parser.add_argument("--ais", action="store_true", help="Start the optional AIS collector")
+    parser.add_argument("--no-browser", action="store_true")
+    args = parser.parse_args()
     py = python_exe()
     node = shutil.which("node")
     vite = ROOT / "frontend" / "node_modules" / "vite" / "bin" / "vite.js"
@@ -57,9 +63,14 @@ def main() -> None:
                 [node, str(vite), "--host", "127.0.0.1", "--port", "5173", "--strictPort"],
                 cwd=str(ROOT / "frontend"), stdin=subprocess.DEVNULL))
         wait_for(DASH_URL)
-        webbrowser.open(DASH_URL)
+        if args.monitor:
+            children.append(subprocess.Popen([py, "-m", "backend.app.monitor"], cwd=str(ROOT)))
+        if args.ais:
+            children.append(subprocess.Popen([py, "-m", "backend.app.connectors.ais"], cwd=str(ROOT)))
+        if not args.no_browser:
+            webbrowser.open(DASH_URL)
         print("React dashboard:", DASH_URL, "\nPress Ctrl+C to stop services started by this launcher.")
-        while children and all(child.poll() is None for child in children):
+        while children and any(child.poll() is None for child in children):
             time.sleep(0.5)
     except KeyboardInterrupt:
         pass

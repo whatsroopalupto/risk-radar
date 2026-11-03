@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { apiClient } from "../api/client";
 interface ValidationData {
+  historical_dataset: { valid: boolean; event_count: number; source_count: number; errors: string[]; warnings: string[] };
   notice: string; reports: { method: string; validation_status: string; sample_size: number; distinct_events: number;
     metrics: { precision: number | null; recall: number | null; f1: number | null; true_positive: number; false_positive: number; false_negative: number; true_negative: number };
     limitations: string[]; cases: { case_id: string; label: boolean; predicted: boolean; score: number; label_sources: string[] }[] }[];
@@ -12,7 +13,12 @@ export default function ValidationTab() {
   useEffect(() => { let active = true; apiClient<ValidationData>("/api/validation").then((value) => { if (active) setData(value); }).catch(() => { if (active) setError(true); }); return () => { active = false; }; }, []);
   return <section><h2>Historical Validation</h2>
     {error && <p role="alert">Validation reports could not be loaded.</p>}
-    {data && <><p>{data.notice}</p>{data.reports.length === 0 && <p>No measured report is available yet.</p>}
+    {data && <><p>{data.notice}</p>
+      <article className="graph-panel"><h3>Historical research register</h3>
+        <p>{data.historical_dataset.event_count} events · {data.historical_dataset.source_count} sources · Structure {data.historical_dataset.valid ? "passes" : "needs correction"}</p>
+        <p>Research labels remain separate from measured evaluation cases. A valid CSV does not establish independently verified labels or model accuracy.</p>
+        <details><summary>Review requirements ({data.historical_dataset.warnings.length})</summary><ul>{[...data.historical_dataset.errors, ...data.historical_dataset.warnings].map((item) => <li key={item}>{item}</li>)}</ul></details>
+      </article>{data.reports.length === 0 && <p>No measured report is available yet.</p>}
       {data.reports.map((report, index) => <article key={index} className="graph-panel">
         <h3>{report.method}</h3><p>{report.sample_size} route-windows across {report.distinct_events} event families · {report.validation_status.replaceAll("_", " ")}</p>
         <p>Precision: {percentage(report.metrics.precision)} · Recall: {percentage(report.metrics.recall)} · F1: {percentage(report.metrics.f1)}</p>

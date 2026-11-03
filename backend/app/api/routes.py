@@ -161,12 +161,15 @@ def trade_refresh():
 
 @router.get("/validation")
 def validation_reports():
+    from ..historical.validation import validate_historical_dataset
+    root=Path(__file__).resolve().parents[3]
+    historical=validate_historical_dataset(root/"data/historical/processed/historical_events.csv",root/"data/historical/source_register.csv")
     directory=Path(__file__).resolve().parents[3]/"output"/"evaluation"
     reports=[]
     for filename in ("pilot_heuristic.json","pilot_gemini.json"):
         path=directory/filename
         if path.exists():
             reports.append(json.loads(path.read_text(encoding="utf-8")))
-    return {"status":"provisional_pilot" if reports else "not_evaluated","reports":reports,
+    return {"status":"provisional_pilot" if reports else "not_evaluated","reports":reports,"historical_dataset":historical,
         "notice":"Small, provisionally source-reviewed paraphrase corpus. These are not final held-out accuracy or real-time lead-time results."}
 

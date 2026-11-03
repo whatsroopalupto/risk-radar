@@ -119,9 +119,8 @@ def validate_historical_dataset(
     source_rows = _read_csv_rows(source_register_path) if sample_rows is None else []
 
     errors.extend(_ensure_required_columns(event_rows, EVENT_COLUMNS, "historical_events.csv"))
-    if not sample_rows:
-        errors.extend(_ensure_required_columns(_read_csv_rows(source_register_path), SOURCE_COLUMNS, "source_register.csv"))
-        source_rows = _read_csv_rows(source_register_path)
+    if sample_rows is None:
+        errors.extend(_ensure_required_columns(source_rows, SOURCE_COLUMNS, "source_register.csv"))
 
     if "event_id" in (event_rows[0].keys() if event_rows else []) and event_rows:
         duplicate_event_ids = _duplicate_ids(event_rows, "event_id")
@@ -145,6 +144,10 @@ def validate_historical_dataset(
             errors.append(f"historical_events.csv row {index}: invalid event_date '{row.get('event_date')}'")
         if row.get("event_end_date") and not _is_valid_date(row.get("event_end_date")):
             errors.append(f"historical_events.csv row {index}: invalid event_end_date '{row.get('event_end_date')}'")
+        if _is_valid_date(row.get("event_date")) and _is_valid_date(row.get("event_end_date")) and row["event_end_date"] < row["event_date"]:
+            errors.append(f"historical_events.csv row {index}: event_end_date precedes event_date")
+        if row.get("review_status") != "independent_review":
+            warnings.append(f"{row.get('event_id')}: labels require independent review before benchmark use")
         if row.get("route_risk_label", "").upper() not in valid_labels:
             errors.append(f"historical_events.csv row {index}: invalid route_risk_label '{row.get('route_risk_label')}'")
         if row.get("severity", "").upper() not in valid_severity:
@@ -163,11 +166,21 @@ def validate_historical_dataset(
 
     if event_rows and source_rows:
         source_ids = {str(row.get("source_id", "")).strip() for row in source_rows if str(row.get("source_id", "")).strip()}
+        event_ids = {row.get("event_id") for row in event_rows}
+        source_events = {row.get("source_id"): row.get("event_id") for row in source_rows}
+        for source in source_rows:
+            if source.get("event_id") not in event_ids:
+                errors.append(f"Source {source.get('source_id')}: unknown event_id")
+            if urlparse(source.get("URL", "")).path in ("", "/", "/world", "/world/"):
+                warnings.append(f"{source.get('source_id')}: replace broad landing page with a direct claim citation")
         for row in event_rows:
             event_source_ids = [value.strip() for value in str(row.get("source_ids", "") or "").split(";") if value.strip()]
             missing = [value for value in event_source_ids if value not in source_ids]
             if missing:
                 errors.append(f"historical_events.csv row {row.get('event_id', '?')}: source IDs not registered: {', '.join(missing)}")
+            for source_id in event_source_ids:
+                if source_id in source_events and source_events[source_id] != row.get("event_id"):
+                    errors.append(f"Event {row.get('event_id')}: source {source_id} belongs to a different event")
 
     summary = {
         "valid": not errors,

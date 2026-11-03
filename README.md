@@ -116,6 +116,12 @@ Interactive endpoint documentation: `http://127.0.0.1:8000/docs`.
 
 ## Verification and historical evaluation
 
+For the complete local demo, run `demo.bat` (includes scheduled news/trade collection
+and AIS; Gemini calls use account quota). See [demo handover](docs/DEMO_COMPLETION.md)
+for the walkthrough, measured limitations and remaining field validation.
+Run `.venv\Scripts\python.exe -m scripts.evaluate_demo` to rebuild the offline
+pilot with links to the validated historical research register.
+
 ```powershell
 cd backend
 ..\.venv\Scripts\python.exe -m pytest -q

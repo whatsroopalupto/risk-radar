@@ -10,6 +10,8 @@ from __future__ import annotations
 import argparse
 import csv
 import logging
+import os
+import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable, Sequence
@@ -101,11 +103,29 @@ def write_article_csv(rows: Iterable[dict[str, str]], output_path: str | Path) -
         "collection_timestamp",
     ]
 
-    with destination.open("w", encoding="utf-8", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=fieldnames)
-        writer.writeheader()
-        for row in rows:
-            writer.writerow({field: row.get(field, "") for field in fieldnames})
+    incoming = list(rows)
+    if not incoming:
+        return  # Empty or failed retrieval must never erase the research archive.
+    existing = []
+    if destination.exists():
+        with destination.open(encoding="utf-8", newline="") as handle:
+            reader = csv.DictReader(handle)
+            if reader.fieldnames != fieldnames:
+                raise ValueError("Existing article archive has an incompatible schema")
+            existing = list(reader)
+    merged = {row["url"]: row for row in existing + incoming}
+    temporary = None
+    try:
+        with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", newline="", dir=destination.parent, delete=False) as handle:
+            temporary = Path(handle.name)
+            writer = csv.DictWriter(handle, fieldnames=fieldnames)
+            writer.writeheader()
+            for row in merged.values():
+                writer.writerow({field: row.get(field, "") for field in fieldnames})
+        os.replace(temporary, destination)
+    finally:
+        if temporary is not None:
+            temporary.unlink(missing_ok=True)
 
 
 def collect_gdelt_articles(

@@ -18,6 +18,7 @@ class Settings(BaseSettings):
     aisstream_api_key: str = ""
     ais_stale_minutes: int = 15
     ais_baseline_days: int = 30
+    ais_score_fusion_enabled: bool = False
     max_articles_per_run: int = 80
 
 settings = Settings()
