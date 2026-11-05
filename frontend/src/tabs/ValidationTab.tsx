@@ -17,14 +17,68 @@ export default function ValidationTab() {
     {error && <p role="alert">Validation reports could not be loaded.</p>}
     {data && <><p>{data.notice}</p>
       <article className="validation-panel"><h3>Historical research register</h3>
-        <p>{data.historical_dataset.event_count} events · {data.historical_dataset.source_count} sources · Structure {data.historical_dataset.valid ? "passes" : "needs correction"}</p>
+        <p className="validation-register-meta">
+          {data.historical_dataset.event_count} events · {data.historical_dataset.source_count} sources · Structure {data.historical_dataset.valid ? "passes" : "needs correction"}
+        </p>
         <p>Research labels remain separate from measured evaluation cases. A valid CSV does not establish independently verified labels or model accuracy.</p>
         <details><summary>Review requirements ({data.historical_dataset.warnings.length})</summary><ul>{[...data.historical_dataset.errors, ...data.historical_dataset.warnings].map((item) => <li key={item}>{item}</li>)}</ul></details>
       </article>{data.reports.length === 0 && <p>No measured report is available yet.</p>}
       {data.reports.map((report, index) => <article key={index} className="graph-panel">
-        <h3 className="validation-report-title">{report.method}</h3><p>{report.sample_size} route-windows across {report.distinct_events} event families · {report.validation_status.replaceAll("_", " ")}</p>
-        <p>Precision: {percentage(report.metrics.precision)} · Recall: {percentage(report.metrics.recall)} · F1: {percentage(report.metrics.f1)}</p>
-        <p>True positives {report.metrics.true_positive} · False positives {report.metrics.false_positive} · False negatives {report.metrics.false_negative} · True negatives {report.metrics.true_negative}</p>
+        <div className="validation-report-header">
+          <h3 className="validation-report-title">
+            {report.method.split(" news-only;")[0].replaceAll("-", " ")}
+          </h3>
+          <span className="validation-status">
+            {report.validation_status.replaceAll("_", " ")}
+          </span>
+        </div>
+
+        <p className="validation-report-description">
+          This validation uses news data only. AIS observations and historical
+          market data are not included as corroborating evidence.
+        </p>
+
+        <p className="validation-report-meta">
+          {report.sample_size} route-windows across {report.distinct_events} event families
+        </p>
+
+        <div className="validation-metrics">
+          <div className="validation-metric-card">
+            <span>Precision</span>
+            <strong>{percentage(report.metrics.precision)}</strong>
+          </div>
+          <div className="validation-metric-card">
+            <span>Recall</span>
+            <strong>{percentage(report.metrics.recall)}</strong>
+          </div>
+          <div className="validation-metric-card">
+            <span>F1 Score</span>
+            <strong>{percentage(report.metrics.f1)}</strong>
+          </div>
+        </div>
+
+        <div className="ais-corridor-metrics validation-confusion">
+          <div className="ais-metric">
+            <span>TRUE POSITIVES</span>
+            <strong>{report.metrics.true_positive}</strong>
+            <small>Correctly flagged</small>
+          </div>
+          <div className="ais-metric">
+            <span>FALSE POSITIVES</span>
+            <strong>{report.metrics.false_positive}</strong>
+            <small>Incorrectly flagged</small>
+          </div>
+          <div className="ais-metric">
+            <span>FALSE NEGATIVES</span>
+            <strong>{report.metrics.false_negative}</strong>
+            <small>Missed cases</small>
+          </div>
+          <div className="ais-metric">
+            <span>TRUE NEGATIVES</span>
+            <strong>{report.metrics.true_negative}</strong>
+            <small>Correctly not flagged</small>
+          </div>
+        </div>
         <div className="vessel-table-scroll"><table><caption>Case-level errors and evidence</caption><thead><tr><th>Case</th><th>Documented disruption</th><th>Flagged ≥30</th><th>Score</th><th>Sources</th></tr></thead>
           <tbody>{report.cases.map((item) => <tr key={item.case_id}><td>{item.case_id.replaceAll("_", " ")}</td><td>{item.label ? "Yes" : "No"}</td><td>{item.predicted ? "Yes" : "No"}</td><td>{item.score.toFixed(1)}</td><td>{item.label_sources.map((url, sourceIndex) => <a key={url} href={url} target="_blank" rel="noopener noreferrer">Source {sourceIndex + 1} </a>)}</td></tr>)}</tbody></table></div>
         <details><summary>Interpretation and limitations</summary><ul>{report.limitations.map((item) => <li key={item}>{item}</li>)}</ul></details>

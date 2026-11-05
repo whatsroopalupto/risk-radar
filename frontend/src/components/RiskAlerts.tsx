@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { apiClient } from "../api/client";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
 interface RiskAlert {
   id: number;
@@ -96,6 +97,10 @@ export default function RiskAlerts({ refreshKey }: { refreshKey: number }) {
                 <span className={`risk-alert-badge ${severity}`}>
                   {severity === "high" ? "HIGH" : "ELEVATED"}
                 </span>
+                <span className="risk-alert-chevron" aria-hidden="true">
+                  <ChevronDown className="chevron-down" size={18} />
+                  <ChevronUp className="chevron-up" size={18} />
+                </span>
               </summary>
 
               <div className="risk-alert-expanded">
@@ -118,8 +123,8 @@ export default function RiskAlerts({ refreshKey }: { refreshKey: number }) {
                       {alert.evidence.map((evidence) => (
                         <li key={evidence.signal_id}>
                           {evidence.url &&
-                          !isReplay &&
-                          /^https?:\/\//i.test(evidence.url) ? (
+                            !isReplay &&
+                            /^https?:\/\//i.test(evidence.url) ? (
                             <a
                               href={evidence.url}
                               target="_blank"

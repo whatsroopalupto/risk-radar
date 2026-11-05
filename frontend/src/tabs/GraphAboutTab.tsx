@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { getGraph } from "../api/endpoints";
 import type { GraphResponse } from "../types/api";
 import NetworkGraph from "../components/NetworkGraph";
+import { Info } from "lucide-react";
 
 function GraphAboutTab() {
   const [graph, setGraph] = useState<GraphResponse | null>(null);
@@ -53,11 +54,14 @@ function GraphAboutTab() {
         Supply-chain relationships between monitored suppliers, maritime
         routes, chokepoints, and refinery dependencies.
       </p>
-      <p className="section-description">
-        Supplier links represent possible geographic paths, not observed shipments.
-        Refinery dependency shares are illustrative assumptions; national trade
-        statistics do not determine refinery procurement.
-      </p>
+      <div className="graph-disclaimer">
+        <Info size={17} aria-hidden="true" />
+        <p className="section-description graph-disclaimer">
+          Supplier links represent possible geographic paths, not observed shipments.
+          Refinery dependency shares are illustrative assumptions; national trade
+          statistics do not determine refinery procurement.
+        </p>
+      </div>
 
       <div className="graph-summary">
         <article className="graph-stat">
@@ -84,19 +88,6 @@ function GraphAboutTab() {
       </div>
 
       <div className="about-section">
-        <details>
-          <summary className="graph-table-summary">
-            Supply-chain connections as a table
-          </summary>
-          <div className="graph-table-scroll"><table>
-            <caption>Equivalent connections for the supply-chain diagram</caption>
-            <thead><tr><th scope="col">From</th><th scope="col">To</th></tr></thead>
-            <tbody>{graph?.edges.map((edge) => <tr key={`${edge.source}-${edge.target}`}>
-              <td>{String(graph.nodes.find((node) => node.id === edge.source)?.name ?? edge.source)}</td>
-              <td>{String(graph.nodes.find((node) => node.id === edge.target)?.name ?? edge.target)}</td>
-            </tr>)}</tbody>
-          </table></div>
-        </details>
         <h3>About the Risk Radar</h3>
 
         <p>

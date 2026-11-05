@@ -29,14 +29,25 @@ export default function VesselActivityTab({ refreshKey }: { refreshKey: number }
     return () => { active = false; };
   }, [refreshKey]);
   return <section className="vessel-activity-tab">
-    <h2>AIS Vessel Activity</h2>
+    <div className="ais-heading">
+      <h2>AIS Vessel Activity</h2>
+      <p className="section-description">
+        Monitor vessel activity, position reports, and AIS coverage across key maritime corridors.
+      </p>
+      <p className="ais-live-meta">
+        Live AIS observations are independent of the news replay selected elsewhere.
+        {data && <> &nbsp; Updated {date(data.computed_at)}</>}
+      </p>
+    </div>
     {error && <p role="alert">{error}</p>}
     {!data && !error && <p>Loading vessel observations...</p>}
     {data && <>
       <div className="ais-status-strip">
         <div className="ais-status-card">
           <span className="ais-status-label">AIS Collector</span>
-          <strong>{data.health.status.replaceAll("_", " ")}</strong>
+          <strong className={data.health.status === "connected" ? "ais-status-connected" : ""}>
+            {data.health.status.replaceAll("_", " ")}
+          </strong>
         </div>
         <div className="ais-status-card">
           <span className="ais-status-label">Position Data</span>
@@ -47,14 +58,14 @@ export default function VesselActivityTab({ refreshKey }: { refreshKey: number }
           <strong>{data.score_fusion_enabled ? "Experimental" : "Disabled"}</strong>
         </div>
       </div>
-      <p>{data.health.detail}</p>
+      <p className="ais-position-notice">{data.health.detail}</p>
       <div className="ais-fusion-note">
         <strong>AIS Contribution to Route Scores</strong>
-        <p>
+        <span>
           {data.score_fusion_enabled
             ? "Experimental fusion enabled; coverage gates still apply."
             : "Disabled pending baseline validation; observations remain available."}
-        </p>
+        </span>
       </div>
       <div className="ais-info-panel">
         <div>
@@ -66,7 +77,6 @@ export default function VesselActivityTab({ refreshKey }: { refreshKey: number }
           <p>{data.limitation}</p>
         </div>
       </div>
-      <p>Live AIS observations are independent of the news replay selected elsewhere. Updated {date(data.computed_at)}.</p>
       {data.corridors.map((corridor) => <article className="graph-panel vessel-corridor-card" key={corridor.id}>
         <h3>{corridor.id === "hormuz" ? "Hormuz region and UAE approaches (research box)" : "Southern Red Sea / Bab-el-Mandeb"}</h3>
         <div className="ais-corridor-metrics">

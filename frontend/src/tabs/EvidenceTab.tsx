@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { apiClient } from "../api/client";
+import { Search } from "lucide-react";
+
 interface EvidenceResult {
   dataset: string; mode: string; model: string | null; notice: string;
   paragraphs: { text: string; citations: string[] }[];
@@ -20,8 +22,22 @@ export default function EvidenceTab() {
       catch { setError("Evidence request failed. Please try again."); }
       finally { setLoading(false); }
     }}>
-      <label htmlFor="evidence-question">Question</label>
-      <input id="evidence-question" value={question} minLength={3} maxLength={500} required onChange={(event) => setQuestion(event.target.value)} style={{ width: "100%", padding: "0.8rem" }} />
+      <label htmlFor="evidence-question" className="visually-hidden">
+        Question
+      </label>
+
+      <div className="evidence-search-input">
+        <Search size={17} aria-hidden="true" />
+        <input
+          id="evidence-question"
+          value={question}
+          minLength={3}
+          maxLength={500}
+          required
+          onChange={(event) => setQuestion(event.target.value)}
+          placeholder="What evidence concerns oil shipping through Hormuz?"
+        />
+      </div>
       <div className="evidence-form-actions">
         <label>
           <input
