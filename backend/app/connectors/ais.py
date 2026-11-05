@@ -162,7 +162,7 @@ def activity_summary(now: datetime | None = None) -> dict:
 async def collect_forever():
     """Run one collector process. API credentials remain on the server."""
     from websockets.asyncio.client import connect
-    from websockets.exceptions import WebSocketException
+    from websockets.exceptions import InvalidStatus, WebSocketException
     init_db()
     if not settings.aisstream_api_key:
         set_collector_state("not_configured", "AISSTREAM_API_KEY is missing")
@@ -205,10 +205,18 @@ async def collect_forever():
                         if (utcnow() - last_heartbeat).total_seconds() >= 30:
                             set_collector_state("connected")
                             last_heartbeat = utcnow()
+            except InvalidStatus as exc:
+                logger.warning(
+                    "AIS WebSocket handshake rejected: HTTP %s",
+                    exc.response.status_code,
+                )
+                set_collector_state("reconnecting", "AIS WebSocket handshake rejected")
+                await asyncio.sleep(delay + random.random())
+                delay = min(60, delay * 2)
+
             except (OSError, WebSocketException, TimeoutError, ValueError) as exc:
                 logger.warning("AIS connection attempt failed: %s", type(exc).__name__)
                 set_collector_state("reconnecting", "Connection unavailable; retrying with backoff")
-                logger.warning("AIS connection attempt failed: %s", type(exc).__name__)     
                 await asyncio.sleep(delay + random.random())
                 delay = min(60, delay * 2)
     finally:
