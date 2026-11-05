@@ -1,5 +1,6 @@
 """Server-side AISStream collection. Observations are not confirmed tanker transits."""
 import asyncio
+import logging
 import json
 import math
 import random
@@ -10,6 +11,7 @@ from sqlalchemy.exc import IntegrityError
 from ..config import settings
 from ..db import CollectorState, SessionLocal, VesselObservation, VesselProfile, AisCoverageMinute, init_db, utcnow
 from .base import BaseConnector
+logger = logging.getLogger(__name__)
 
 # Research bounding boxes, not official transit gates.
 CORRIDORS = {"hormuz": ((25.0, 55.0), (27.5, 58.0)),
@@ -203,8 +205,10 @@ async def collect_forever():
                         if (utcnow() - last_heartbeat).total_seconds() >= 30:
                             set_collector_state("connected")
                             last_heartbeat = utcnow()
-            except (OSError, WebSocketException, TimeoutError, ValueError):
+            except (OSError, WebSocketException, TimeoutError, ValueError) as exc:
+                logger.warning("AIS connection attempt failed: %s", type(exc).__name__)
                 set_collector_state("reconnecting", "Connection unavailable; retrying with backoff")
+                logger.warning("AIS connection attempt failed: %s", type(exc).__name__)     
                 await asyncio.sleep(delay + random.random())
                 delay = min(60, delay * 2)
     finally:
