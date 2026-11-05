@@ -212,13 +212,13 @@ async def collect_forever():
                 )
                 set_collector_state("reconnecting", "AIS WebSocket handshake rejected")
                 await asyncio.sleep(delay + random.random())
-                delay = min(60, delay * 2)
+                delay = min(900, delay * 2)
 
             except (OSError, WebSocketException, TimeoutError, ValueError) as exc:
                 logger.warning("AIS connection attempt failed: %s", type(exc).__name__)
                 set_collector_state("reconnecting", "Connection unavailable; retrying with backoff")
                 await asyncio.sleep(delay + random.random())
-                delay = min(60, delay * 2)
+                delay = min(900, delay * 2)
     finally:
         set_collector_state("stopped")
 
