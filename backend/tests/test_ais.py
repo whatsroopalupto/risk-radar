@@ -60,20 +60,50 @@ def test_no_key_never_connects(monkeypatch):
 
 def test_stream_subscribes_and_persists_binary_frames_without_live_network(monkeypatch):
     sent = []
-    frames = [json.dumps({"MessageType":"SubscriptionConfirmation"}).encode(), json.dumps(message()).encode()]
+
+    frames = [
+        json.dumps({"type": "welcome"}).encode(),
+        json.dumps({
+            "type": "event",
+            "msg_type": "PositionReport",
+            "mmsi": 123456789,
+            "lat": 26.2,
+            "lon": 56.5,
+            "time": NOW.isoformat(),
+            "message": {"Sog": 12.4},
+        }).encode(),
+    ]
+
     class Socket:
-        async def send(self, subscription): sent.append(json.loads(subscription))
+        async def send(self, subscription):
+            sent.append(json.loads(subscription))
+
         async def recv(self):
-            if frames: return frames.pop(0)
+            if frames:
+                return frames.pop(0)
             raise asyncio.CancelledError
+
     class Connection:
-        async def __aenter__(self): return Socket()
-        async def __aexit__(self, *args): return False
-    monkeypatch.setattr("websockets.asyncio.client.connect", lambda *args, **kwargs: Connection())
+        async def __aenter__(self):
+            return Socket()
+
+        async def __aexit__(self, *args):
+            return False
+
+    monkeypatch.setattr(
+        "websockets.asyncio.client.connect",
+        lambda *args, **kwargs: Connection()
+    )
     monkeypatch.setattr(settings, "aisstream_api_key", "offline-test-key")
     monkeypatch.setattr("app.connectors.ais.utcnow", lambda: NOW)
-    with pytest.raises(asyncio.CancelledError): asyncio.run(collect_forever())
-    assert sent[0]["APIKey"] == "offline-test-key"
-    assert len(sent[0]["BoundingBoxes"]) == 2
+
+    with pytest.raises(asyncio.CancelledError):
+        asyncio.run(collect_forever())
+
+    assert sent[0]["type"] == "subscribe"
+    assert len(sent[0]["bbox"]) == 2
+
     with SessionLocal() as db:
-        assert db.scalar(select(func.count()).select_from(VesselObservation)) == 1
+        assert db.scalar(
+            select(func.count()).select_from(VesselObservation)
+        ) == 1
