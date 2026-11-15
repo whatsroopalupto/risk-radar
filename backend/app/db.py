@@ -1,6 +1,9 @@
 """SQLite persistence models and session factory for local Phase 1 runs."""
 from datetime import datetime, timezone
-from sqlalchemy import JSON, DateTime, Float, Integer, String, Text, UniqueConstraint, create_engine
+from sqlalchemy import (
+    JSON, DateTime, Float, Integer, String, Text,
+    UniqueConstraint, create_engine, inspect, text
+)
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, sessionmaker
 from .config import settings
 
@@ -99,6 +102,7 @@ class VesselProfile(Base):
     __tablename__ = "vessel_profiles"
     mmsi: Mapped[str] = mapped_column(String(9), primary_key=True)
     ship_type: Mapped[int] = mapped_column(Integer)
+    ship_name: Mapped[str] = mapped_column(String(255), default="")
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
 
 class TradeSnapshot(Base):
@@ -118,6 +122,18 @@ SessionLocal = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False
 def init_db() -> None:
     """Create Phase 1 tables without migration machinery."""
     Base.metadata.create_all(engine)
+    # Safely add new columns to existing databases.
+    columns = {
+        column["name"]
+        for column in inspect(engine).get_columns("vessel_profiles")
+    }
+
+    if "ship_name" not in columns:
+        with engine.begin() as conn:
+            conn.execute(text(
+                "ALTER TABLE vessel_profiles "
+                "ADD COLUMN ship_name VARCHAR(255) NOT NULL DEFAULT ''"
+            ))
     # Existing developer data remains available to retrieval without relabelling
     # it as a newly fetched article or an independently verified historical label.
     with SessionLocal() as db:

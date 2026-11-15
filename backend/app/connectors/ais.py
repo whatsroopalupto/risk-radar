@@ -8,6 +8,7 @@ import re
 from datetime import datetime, timedelta, timezone
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
+
 from ..config import settings
 from ..db import CollectorState, SessionLocal, VesselObservation, VesselProfile, AisCoverageMinute, init_db, utcnow
 from .base import BaseConnector
@@ -16,8 +17,7 @@ logger = logging.getLogger(__name__)
 # Research bounding boxes, not official transit gates.
 CORRIDORS = {"hormuz": ((25.0, 55.0), (27.5, 58.0)),
              "red_sea": ((12.0, 42.0), (16.0, 44.5))}
-STREAM_URL = "wss://stream.aisstream.io/v0/stream"
-
+STREAM_URL = "wss://ais.openwaters.io/v1/stream"
 
 def aware(value):
     return value.replace(tzinfo=timezone.utc) if value.tzinfo is None else value.astimezone(timezone.utc)
@@ -90,19 +90,27 @@ def set_collector_state(status: str, detail: str = ""):
         db.commit()
 
 def save_profile(message):
-    if message.get("MessageType")!="ShipStaticData":
+    if message.get("MessageType") != "ShipStaticData":
         return False
     try:
-        report=message["Message"]["ShipStaticData"]
-        mmsi=str(message.get("MetaData",{}).get("MMSI") or report["UserID"])
-        ship_type=int(report["Type"])
-        if len(mmsi)!=9 or not mmsi.isdigit() or not 0<=ship_type<=99:
+        report = message["Message"]["ShipStaticData"]
+        mmsi = str(message.get("MetaData", {}).get("MMSI") or report["UserID"])
+        ship_type = int(report["Type"])
+        ship_name = str(report.get("Name") or "").strip()[:255]
+
+        if len(mmsi) != 9 or not mmsi.isdigit() or not 0 <= ship_type <= 99:
             return False
+
         with SessionLocal() as db:
-            db.merge(VesselProfile(mmsi=mmsi,ship_type=ship_type,updated_at=utcnow()))
+            db.merge(VesselProfile(
+                mmsi=mmsi,
+                ship_type=ship_type,
+                ship_name=ship_name,
+                updated_at=utcnow()
+            ))
             db.commit()
         return True
-    except (KeyError,ValueError,TypeError):
+    except (KeyError, ValueError, TypeError):
         return False
 
 
@@ -138,7 +146,14 @@ def activity_summary(now: datetime | None = None) -> dict:
             recent = db.scalars(select(VesselObservation).join(ranked, VesselObservation.id == ranked.c.id)
                 .where(ranked.c.rank == 1).order_by(VesselObservation.observed_at.desc()).limit(100)).all()
             first = db.scalar(select(func.min(VesselObservation.observed_at)).where(VesselObservation.corridor == name))
-            profiles={p.mmsi:p.ship_type for p in db.scalars(select(VesselProfile).where(VesselProfile.updated_at>=now-timedelta(days=30))).all()}
+            profiles = {
+                p.mmsi: {"ship_type": p.ship_type, "ship_name": p.ship_name}
+                for p in db.scalars(
+                    select(VesselProfile).where(
+                        VesselProfile.updated_at >= now - timedelta(days=30)
+                    )
+                ).all()
+            }
             from ..pipeline.vessel_features import corridor_features
             fresh=bool(recent) and (now-aware(recent[0].observed_at)).total_seconds()<=settings.ais_stale_minutes*60 and not health["heartbeat_stale"]
             features=corridor_features(name,now,fresh)
@@ -148,10 +163,10 @@ def activity_summary(now: datetime | None = None) -> dict:
                 "baseline_status":features["status"] if first else "no_observations",
                 "baseline_target_days":settings.ais_baseline_days,
                 "anomaly":features["anomaly"],"features":features,
-                "vessels":[{"mmsi":r.mmsi,"name":r.ship_name,"latitude":r.latitude,
+                "vessels":[{"mmsi":r.mmsi,"name":r.ship_name or profiles.get(r.mmsi, {}).get("ship_name", ""),"latitude":r.latitude,
                     "longitude":r.longitude,"speed_knots":r.speed_knots,"observed_at":r.observed_at,
-                    "vessel_class":"tanker" if 80<=profiles.get(r.mmsi,-1)<=89 else "unknown" if r.mmsi not in profiles else "other",
-                    "ship_type":profiles.get(r.mmsi)}
+                    "vessel_class":"tanker" if 80<=profiles.get(r.mmsi, {}).get("ship_type", -1)<=89 else "unknown" if r.mmsi not in profiles else "other",
+                    "ship_type":profiles.get(r.mmsi, {}).get("ship_type")}
                     for r in recent]})
     return {"health":health, "computed_at":now, "corridors":corridors,
             "score_fusion_enabled":settings.ais_score_fusion_enabled,
@@ -174,8 +189,13 @@ async def collect_forever():
                 set_collector_state("connecting")
                 async with connect(STREAM_URL, compression="deflate", open_timeout=20,
                                    ping_interval=20, ping_timeout=20, max_size=2**20) as socket:
-                    await socket.send(json.dumps({"APIKey":settings.aisstream_api_key,
-                        "BoundingBoxes":list(CORRIDORS.values()), "FilterMessageTypes":["PositionReport","ShipStaticData"]}))
+                    await socket.send(json.dumps({
+                        "type": "subscribe",
+                        "bbox": [
+                            [25.0, 55.0, 27.5, 58.0],
+                            [12.0, 42.0, 16.0, 44.5]
+                        ]
+                    }))
                     set_collector_state("subscribing")
                     confirmed = False
                     last_heartbeat = utcnow()
@@ -193,15 +213,51 @@ async def collect_forever():
                             continue
                         if not isinstance(message, dict):
                             continue
-                        if message.get("error") or message.get("Error"):
-                            # Never persist provider error text: it can echo credentials.
-                            raise ValueError("Provider rejected AIS subscription")
-                        if message.get("MessageType") == "SubscriptionConfirmation":
+                        if message.get("type") == "error" or message.get("error") or message.get("Error"):
+                            raise ValueError("Open Waters rejected AIS subscription")
+
+                        if message.get("type") == "welcome":
                             confirmed = True
                             set_collector_state("connected")
                             delay = 1
-                        await asyncio.to_thread(save_position, message)
-                        await asyncio.to_thread(save_profile, message)
+                            continue
+
+                        if message.get("type") != "event":
+                            continue
+                        if message.get("msg_type") == "ShipStaticData":
+                            normalized = {
+                                "MessageType": "ShipStaticData",
+                                "Message": {
+                                    "ShipStaticData": message.get("message", {})
+                                },
+                                "MetaData": {
+                                    "MMSI": message.get("mmsi"),
+                                },
+                            }
+                            await asyncio.to_thread(save_profile, normalized)
+                            continue
+                        if message.get("msg_type") == "PositionReport":
+                            decoded = message.get("message")
+                            if not isinstance(decoded, dict):
+                                decoded = {}
+
+                            normalized = {
+                                "MessageType": "PositionReport",
+                                "Message": {
+                                    "PositionReport": {
+                                        "Latitude": message.get("lat"),
+                                        "Longitude": message.get("lon"),
+                                        "Sog": decoded.get("Sog"),
+                                    }
+                                },
+                                "MetaData": {
+                                    "MMSI": message.get("mmsi"),
+                                    "time_utc": message.get("time"),
+                                    "ShipName": decoded.get("ShipName", ""),
+                                },
+                            }
+
+                            await asyncio.to_thread(save_position, normalized)
                         if (utcnow() - last_heartbeat).total_seconds() >= 30:
                             set_collector_state("connected")
                             last_heartbeat = utcnow()
