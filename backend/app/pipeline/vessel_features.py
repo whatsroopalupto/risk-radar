@@ -31,23 +31,76 @@ def assess_activity(baseline_counts, current_count, coverage_fraction, required_
     return result
 
 def corridor_features(corridor, now, fresh):
-    end=now.replace(minute=0,second=0,microsecond=0)
-    start=end-timedelta(hours=1)
-    earliest=start-timedelta(days=max(45,settings.ais_baseline_days*2))
-    with SessionLocal() as db:
-        minutes=db.scalars(select(AisCoverageMinute.minute).where(AisCoverageMinute.minute>=earliest,AisCoverageMinute.minute<end)).all()
-        coverage={}
-        for minute in minutes:
-            hour=utc(minute).replace(minute=0,second=0,microsecond=0)
-            coverage[hour]=coverage.get(hour,0)+1
-        rows=db.execute(select(func.strftime("%Y-%m-%dT%H:00:00",VesselObservation.observed_at),func.count(func.distinct(VesselObservation.mmsi))).where(
-            VesselObservation.corridor==corridor,VesselObservation.observed_at>=earliest,VesselObservation.observed_at<end).group_by(func.strftime("%Y-%m-%dT%H:00:00",VesselObservation.observed_at))).all()
     from datetime import datetime
-    counts={datetime.fromisoformat(hour).replace(tzinfo=timezone.utc):count for hour,count in rows}
-    baseline=[count for hour,count in sorted(counts.items()) if hour<start and coverage.get(hour,0)>=48]
-    required=settings.ais_baseline_days*24
-    result=assess_activity(baseline[-required:],counts.get(start,0),min(1.0,coverage.get(start,0)/60),required,fresh)
-    result.update(window_start=start.isoformat(),window_end=end.isoformat())
+
+    end = now.replace(minute=0, second=0, microsecond=0)
+    start = end - timedelta(hours=1)
+    earliest = start - timedelta(days=max(45, settings.ais_baseline_days * 2))
+
+    with SessionLocal() as db:
+        minutes = db.scalars(
+            select(AisCoverageMinute.minute).where(
+                AisCoverageMinute.minute >= earliest,
+                AisCoverageMinute.minute < end
+            )
+        ).all()
+
+        coverage = {}
+        for minute in minutes:
+            hour = utc(minute).replace(minute=0, second=0, microsecond=0)
+            coverage[hour] = coverage.get(hour, 0) + 1
+
+        dialect = db.get_bind().dialect.name
+
+        if dialect == "postgresql":
+            hour_bucket = func.date_trunc("hour", VesselObservation.observed_at)
+        else:
+            hour_bucket = func.strftime(
+                "%Y-%m-%dT%H:00:00",
+                VesselObservation.observed_at
+            )
+
+        rows = db.execute(
+            select(
+                hour_bucket,
+                func.count(func.distinct(VesselObservation.mmsi))
+            )
+            .where(
+                VesselObservation.corridor == corridor,
+                VesselObservation.observed_at >= earliest,
+                VesselObservation.observed_at < end
+            )
+            .group_by(hour_bucket)
+        ).all()
+
+    counts = {
+        (
+            utc(hour) if isinstance(hour, datetime)
+            else datetime.fromisoformat(hour).replace(tzinfo=timezone.utc)
+        ): count
+        for hour, count in rows
+    }
+
+    baseline = [
+        count for hour, count in sorted(counts.items())
+        if hour < start and coverage.get(hour, 0) >= 48
+    ]
+
+    required = settings.ais_baseline_days * 24
+
+    result = assess_activity(
+        baseline[-required:],
+        counts.get(start, 0),
+        min(1.0, coverage.get(start, 0) / 60),
+        required,
+        fresh
+    )
+
+    result.update(
+        window_start=start.isoformat(),
+        window_end=end.isoformat()
+    )
+
     return result
 
 def fuse_activity(base_score, news_score, features):

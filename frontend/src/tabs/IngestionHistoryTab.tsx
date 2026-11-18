@@ -3,6 +3,30 @@ import { useEffect, useState } from "react";
 import { getIngestionHistory } from "../api/endpoints";
 import type { IngestRunStats } from "../types/api";
 
+function formatScenarioName(id: string) {
+  const months: Record<string, string> = {
+    jan: "January", january: "January",
+    feb: "February", february: "February",
+    mar: "March", march: "March",
+    apr: "April", april: "April",
+    may: "May",
+    jun: "June", june: "June",
+    jul: "July", july: "July",
+    aug: "August", august: "August",
+    sep: "September", september: "September",
+    oct: "October", october: "October",
+    nov: "November", november: "November",
+    dec: "December", december: "December",
+  };
+
+  return id
+    .replace(/_([a-z]+)(\d{4})$/i, (_, month, year) =>
+      ` — ${months[month.toLowerCase()] ?? month} ${year}`,
+    )
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
 function IngestionHistoryTab({ refreshKey }: { refreshKey: number }) {
   const [runs, setRuns] = useState<IngestRunStats[]>([]);
   const [historyLimit, setHistoryLimit] = useState(20);
@@ -78,7 +102,7 @@ function IngestionHistoryTab({ refreshKey }: { refreshKey: number }) {
                     <div>
                       <h3>
                         {run.scenario_id
-                          ? `Scenario: ${run.scenario_id}`
+                          ? `Scenario: ${formatScenarioName(run.scenario_id)}`
                           : "Live ingestion"}
                       </h3>
 

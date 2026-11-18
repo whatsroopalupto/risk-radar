@@ -106,23 +106,27 @@ function SimulationControls({
   );
 
   return (
-    <section className="simulation-controls">
+    <section className="simulation-controls simulation-controls-redesign">
       <h2>Simulation Controls</h2>
-      <button type="button" disabled={ingestionLoading || replayLoading} onClick={async () => {
-        try {
-          await apiClient("/api/display/live", { method: "POST" });
-          onDataChanged();
-          setMessage("Showing the saved live dataset. Check its timestamp before treating it as current.");
-        } catch {
-          setError("Unable to switch to live data.");
-        }
-      }}>Show saved live data</button>
+      <button
+        type="button"
+        className="simulation-live-button"
+        disabled={ingestionLoading || replayLoading}
+        onClick={async () => {
+          try {
+            await apiClient("/api/display/live", { method: "POST" });
+            onDataChanged();
+            setMessage("Showing the saved live dataset. Check its timestamp before treating it as current.");
+          } catch {
+            setError("Unable to switch to live data.");
+          }
+        }}>Show saved live data</button>
 
       <p className="section-description">
         Run live news ingestion or replay historical escalation scenarios.
       </p>
 
-      <div className="control-group">
+      <div className="control-group simulation-section">
         <label htmlFor="ingestion-window">
           Live RSS Ingestion Window
         </label>
@@ -130,6 +134,7 @@ function SimulationControls({
         <select
           id="ingestion-window"
           value={ingestionWindow}
+          className="simulation-select"
           onChange={(event) => setIngestionWindow(event.target.value)}
           disabled={ingestionLoading}
         >
@@ -140,8 +145,9 @@ function SimulationControls({
 
         <button
           type="button"
-          onClick={handleRunIngestion}
+          className="simulation-primary-button"
           disabled={ingestionLoading}
+          onClick={handleRunIngestion}
         >
           {ingestionLoading ? (
             <>
@@ -156,12 +162,13 @@ function SimulationControls({
 
       <div className="control-divider" />
 
-      <div className="control-group">
+      <div className="control-group simulation-section">
         <label htmlFor="scenario">Scenario</label>
 
         <select
           id="scenario"
           value={selectedScenario}
+          className="simulation-select"
           onChange={(event) => setSelectedScenario(event.target.value)}
           disabled={loadingScenarios || replayLoading}
         >
@@ -188,6 +195,7 @@ function SimulationControls({
 
         <button
           type="button"
+          className="simulation-secondary-button"
           onClick={handleReplayScenario}
           disabled={
             replayLoading ||
